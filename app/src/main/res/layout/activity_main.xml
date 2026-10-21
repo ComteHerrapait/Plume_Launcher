@@ -75,7 +75,7 @@
                 android:id="@+id/wifi"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:contentDescription="Network settings"
+                android:contentDescription="@string/network_settings"
                 android:focusable="true"
                 android:padding="8dp"
                 android:src="@drawable/ic_wifi" />
@@ -85,7 +85,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="8dp"
-                android:contentDescription="All apps"
+                android:contentDescription="@string/all_apps"
                 android:focusable="true"
                 android:padding="9dp"
                 android:src="@drawable/ic_apps" />
@@ -95,7 +95,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="8dp"
-                android:contentDescription="Settings"
+                android:contentDescription="@string/settings"
                 android:focusable="true"
                 android:padding="8dp"
                 android:src="@drawable/ic_settings" />
@@ -105,7 +105,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="8dp"
-                android:contentDescription="Plume settings"
+                android:contentDescription="@string/plume_settings"
                 android:focusable="true"
                 android:padding="8dp"
                 android:src="@drawable/ic_tune" />
@@ -186,7 +186,7 @@
             android:layout_marginTop="6dp"
             android:alpha="0.7"
             android:fontFamily="sans-serif-medium"
-            android:text="Continue Watching"
+            android:text="@string/continue_watching"
             android:textSize="14sp"
             android:visibility="gone" />
 
@@ -240,7 +240,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:fontFamily="sans-serif"
-                android:text="All apps"
+                android:text="@string/all_apps"
                 android:textSize="20sp" />
 
             <GridLayout
@@ -278,7 +278,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:paddingStart="14dp"
-                android:text="Plume settings"
+                android:text="@string/plume_settings"
                 android:textSize="20sp" />
 
             <!-- Scrolls once the rows outgrow the screen; focus moving down scrolls it along. -->
