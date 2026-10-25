@@ -1439,9 +1439,10 @@ class MainActivity : Activity() {
     private fun toast(res: Int) = Toast.makeText(this, res, Toast.LENGTH_SHORT).show()
 
     private fun sectionHeader(text: String) = label(text, 11f).apply {
-        alpha = 0.5f
+        secondary(0.6f)
         isFocusable = false
         isClickable = false
+        if (Build.VERSION.SDK_INT >= 28) setAccessibilityHeading(true)
         setPadding(dp(14), dp(12), dp(14), dp(3))
     }
 
@@ -1612,10 +1613,12 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(14), 0, dp(14), 0)
             background = bg
-            if (muted) alpha = 0.45f
             isFocusable = true
             isClickable = true
-            val name = label(title, 14f).apply { if (dark) setTextColor(DARK_TEXT_2) }
+            val name = label(title, 14f).apply {
+                if (dark) setTextColor(DARK_TEXT_2)
+                if (muted) secondary(0.6f)
+            }
             addView(name, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             val shown = if (value == TOGGLE_ON || value == TOGGLE_OFF) null else label(value, 13f).apply { secondary(0.6f) }
             if (shown == null) addView(switch(value == TOGGLE_ON), LinearLayout.LayoutParams(dp(36), dp(20)))
@@ -3369,7 +3372,7 @@ class MainActivity : Activity() {
         const val DARK_BG = 0xFF000000.toInt() // home ground, settings panel, inset boxes
         const val DARK_SURFACE = 0xFF0B0B0B.toInt() // placeholders behind images
         const val DARK_TEXT = 0xFFF5F5F5.toInt()
-        const val DARK_TEXT_2 = 0xFF7A7A7A.toInt() // values, unfocused rows, supporting text
+        const val DARK_TEXT_2 = 0xFF8A8A8A.toInt() // values, unfocused rows, supporting text
         // Translucent (70% at rest, 80% selected), so the wallpaper shows through the tiles like frosted glass.
         /** Android's own Watch Next list, listed with the channels so it can be turned off too. */
         const val WATCH_NEXT = "watchnext"
