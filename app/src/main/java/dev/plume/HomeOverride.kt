@@ -2,6 +2,8 @@ package dev.plume
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
@@ -12,12 +14,23 @@ import android.view.accessibility.AccessibilityEvent
  * opens it (e.g. Back out of the last app).
  */
 class HomeOverride : AccessibilityService() {
+    private val handler = Handler(Looper.getMainLooper())
+
+    /** A key being held, whose long action runs when its timer fires. */
+    private class Hold(val long: () -> Unit) {
+        var timer: Runnable? = null
+        var fired = false
+    }
+
+    private val holds = HashMap<String, Hold>()
+
     override fun onServiceConnected() {
         running = this
     }
 
     /** Turned off, from Plume's switch or Android's Accessibility settings: the app mustn't turn it back on. */
     override fun onUnbind(intent: Intent?): Boolean {
+        cancelHolds()
         running = null
         getSharedPreferences("home", MODE_PRIVATE).edit().putBoolean("home_off", true).apply()
         return super.onUnbind(intent)
@@ -25,9 +38,12 @@ class HomeOverride : AccessibilityService() {
 
     override fun onKeyEvent(e: KeyEvent): Boolean {
         if (e.keyCode != KeyEvent.KEYCODE_HOME) return remap(e)
-        // Decided on release, by how long it was held: this TV's remote doesn't reliably send key repeats.
-        if (e.action == KeyEvent.ACTION_UP && !e.isCanceled) {
-            if (e.eventTime - e.downTime < LONG_PRESS_MS) goHome() else performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+        // Timed from the press, so a hold opens the dashboard while the key is still down; a tap goes home
+        // on release. This TV's remote doesn't reliably send key repeats, so a timer is the only clock.
+        if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0) {
+            hold(HOME_KEY) { performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS) }
+        } else if (e.action == KeyEvent.ACTION_UP && !end(HOME_KEY) && !e.isCanceled) {
+            goHome()
         }
         return true
     }
@@ -48,12 +64,43 @@ class HomeOverride : AccessibilityService() {
             return true
         }
         val m = Remap.all(this)[id] ?: return false
-        // Decided on release, like Home: this TV's remote doesn't reliably send key repeats.
-        if (e.action == KeyEvent.ACTION_UP && !e.isCanceled) {
-            val action = if (e.eventTime - e.downTime >= LONG_PRESS_MS && m.long.isNotEmpty()) m.long else m.short
-            if (action.isNotEmpty()) Remap.run(this, action)
+        // The long action runs on its timer while the key is held; a short press runs on release. This TV's
+        // remote doesn't reliably send key repeats, so a timer is the only clock.
+        if (e.action == KeyEvent.ACTION_DOWN) {
+            if (e.repeatCount == 0) {
+                if (m.long.isNotEmpty()) hold(id) { Remap.run(this, m.long) } else cancel(id)
+            }
+        } else if (e.action == KeyEvent.ACTION_UP && !end(id) && !e.isCanceled && m.short.isNotEmpty()) {
+            Remap.run(this, m.short)
         }
         return true
+    }
+
+    /** Starts [id]'s long-action timer, replacing any timer already waiting for that key. */
+    private fun hold(id: String, long: () -> Unit) {
+        cancel(id)
+        val h = Hold(long)
+        h.timer = Runnable {
+            h.fired = true
+            long()
+        }.also { handler.postDelayed(it, LONG_PRESS_MS) }
+        holds[id] = h
+    }
+
+    /** Stops [id]'s timer; true if its long action already ran while the key was held. */
+    private fun end(id: String): Boolean {
+        val h = holds.remove(id) ?: return false
+        h.timer?.let(handler::removeCallbacks)
+        return h.fired
+    }
+
+    private fun cancel(id: String) {
+        holds.remove(id)?.timer?.let(handler::removeCallbacks)
+    }
+
+    private fun cancelHolds() {
+        holds.values.forEach { it.timer?.let(handler::removeCallbacks) }
+        holds.clear()
     }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent) {
@@ -72,6 +119,7 @@ class HomeOverride : AccessibilityService() {
         var running: HomeOverride? = null
             private set
         private const val GOOGLE_TV = "com.google.android.apps.tv.launcherx"
+        private const val HOME_KEY = "home" // the Home key's hold, alongside the remapped keys' ids
         private const val LONG_PRESS_MS = 500L
     }
 }
