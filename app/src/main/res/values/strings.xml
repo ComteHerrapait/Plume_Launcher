@@ -184,6 +184,11 @@
     <string name="check_updates">Check for updates</string>
     <string name="install_update">Install %1$s</string>
     <string name="row_position">App row position</string>
+    <string name="show_row">Show row</string>
+    <string name="on_down">On Down</string>
+    <string name="apps_when_hidden">App row when hidden</string>
+    <string name="stays_put">Stays put</string>
+    <string name="moves_down">Moves down</string>
     <string name="align_left">Left</string>
     <string name="align_centre">Centre</string>
     <string name="align_right">Right</string>

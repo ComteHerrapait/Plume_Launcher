@@ -252,6 +252,9 @@ class MainActivity : Activity() {
     private lateinit var watchTitle: TextView
     private val appsTitle by lazy { findViewById<TextView>(R.id.appsTitle) }
     private lateinit var watchScroll: View
+    private val appScroll by lazy { findViewById<View>(R.id.appScroll) }
+    private var titleAlpha = 1f // the row title's own alpha from the layout, read before placeRow fades it
+    private var rowOut = false // "Show row: On Down": the bottom row has focus, so it's slid in
     private lateinit var allApps: View
     private lateinit var allAppsGrid: GridLayout
     private lateinit var wifi: ImageView
@@ -291,6 +294,7 @@ class MainActivity : Activity() {
         appRow = findViewById(R.id.appRow)
         watchRow = findViewById(R.id.watchRow)
         watchTitle = findViewById(R.id.watchTitle)
+        titleAlpha = watchTitle.alpha
         watchScroll = findViewById(R.id.watchScroll)
         allApps = findViewById(R.id.allApps)
         allAppsGrid = findViewById(R.id.allAppsGrid)
@@ -298,6 +302,14 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.sourcesButton).visibility = if (sources.isEmpty()) View.GONE else View.VISIBLE
         applyTheme()
         loadWallpaper()
+        // "Show row: On Down": the row slides in while one of its cards has focus, however focus got there.
+        window.decorView.viewTreeObserver.addOnGlobalFocusChangeListener { _, now ->
+            val out = rowShow() == "down" && now?.getTag(R.id.watchRow) is Prog
+            if (out != rowOut) { rowOut = out; placeRow(animate = true) }
+        }
+        watchScroll.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (top != oldTop || bottom != oldBottom) placeRow(animate = false) // the drop is measured from the layout
+        }
 
         // Top bar: network, All apps, Android settings, launcher settings. Round, lit on focus.
         for ((id, action) in listOf<Pair<Int, () -> Unit>>(
@@ -1311,6 +1323,16 @@ class MainActivity : Activity() {
                 renderApps()
                 renderSettings(R.string.app_names)
             },
+            R.string.show_row to { d ->
+                prefs.edit().putString("row_show", ROW_SHOW.keys.toList().step(rowShow(), d)).apply()
+                placeRow(animate = false)
+                renderSettings(R.string.show_row)
+            },
+            R.string.apps_when_hidden to { _ ->
+                prefs.edit().putBoolean("row_drop", !rowDrops()).apply()
+                placeRow(animate = false)
+                renderSettings(R.string.apps_when_hidden)
+            },
         )
         val rows = linkedMapOf<Int, Triple<String, String, () -> Unit>>(
             R.string.edit_apps_row to Triple(getString(R.string.edit_apps_row), "") { closeLauncherSettings(); startEdit(grab = null) },
@@ -1349,6 +1371,10 @@ class MainActivity : Activity() {
             R.string.cw_apps to Triple(getString(R.string.cw_apps), if (cwOff == 0) getString(R.string.all_on) else getString(R.string.n_off, cwOff)) { pickWatchSources() },
             R.string.cw_channels to Triple(getString(R.string.cw_channels), getString(R.string.n_on, channelsOn)) { pickChannels() },
             R.string.row_name to Triple(getString(R.string.row_name), rowName()) { pickRowName() },
+            R.string.show_row to Triple(getString(R.string.show_row), getString(ROW_SHOW.getValue(rowShow()))) { steps[R.string.show_row]!!(1) },
+            R.string.apps_when_hidden to Triple(getString(R.string.apps_when_hidden), getString(if (rowDrops()) R.string.moves_down else R.string.stays_put)) {
+                steps[R.string.apps_when_hidden]!!(1)
+            },
             // "weather" is off/c/f as before; "wx_unit" keeps the unit while it's off.
             R.string.weather to Triple(getString(R.string.weather), toggle(weather != "off")) {
                 if (weather == "off") prefs.edit().putString("weather", unit).apply()
@@ -1402,7 +1428,9 @@ class MainActivity : Activity() {
                 listOf(R.string.theme, R.string.light_wallpaper, R.string.dark_wallpaper, R.string.photo_fade, R.string.folder_photo_changes)),
             Triple(R.string.section_app_row, "${rows[R.string.apps_in_row]!!.second} · ${rows[R.string.row_position]!!.second}",
                 listOf(R.string.edit_apps_row, R.string.sort_apps, R.string.apps_in_row, R.string.row_position, R.string.app_names, R.string.icon_style)),
-            Triple(R.string.bottom_row, rowName(), listOf(R.string.row_name, R.string.cw_channels, R.string.cw_apps, R.string.restore_hidden)),
+            // "App row when hidden" only means something once the row can hide.
+            Triple(R.string.bottom_row, rowName(), listOfNotNull(R.string.row_name, R.string.show_row,
+                R.string.apps_when_hidden.takeIf { rowShow() != "always" }, R.string.cw_channels, R.string.cw_apps, R.string.restore_hidden)),
             Triple(R.string.section_weather, if (weather == "off") on(false) else "${rows[R.string.weather_units]!!.second} · ${rows[R.string.weather_location]!!.second}",
                 listOf(R.string.weather, R.string.weather_units, R.string.weather_location)),
             Triple(R.string.section_screensaver, rows[R.string.screensaver]!!.second, listOf(R.string.screensaver, R.string.test_screensaver, R.string.screensaver_timing)),
@@ -3090,10 +3118,8 @@ class MainActivity : Activity() {
         watchList = list
         val focusedAt = watchRow.indexOfChild(currentFocus?.parent as? View)
         watchRow.removeAllViews()
-        val visible = if (list.isEmpty()) View.GONE else View.VISIBLE
-        watchTitle.visibility = visible
         watchTitle.text = rowName()
-        watchScroll.visibility = visible
+        placeRow(animate = false)
         // ~16 ms per card here and only four show at once: the first four now, the next four on the next frame.
         addCardsTo(3)
         watchRow.post { fitInk() }
@@ -3105,6 +3131,45 @@ class MainActivity : Activity() {
     }
 
     private var watchList = emptyList<Prog>()
+
+    /** "always", "down" (hidden until Down reaches it) or "never". */
+    private fun rowShow() = prefs.getString("row_show", "always")!!.takeIf { it in ROW_SHOW } ?: "always"
+
+    /** While the bottom row is hidden, the app row drops into its space (true) or stays where it is. */
+    private fun rowDrops() = prefs.getBoolean("row_drop", false)
+
+    /**
+     * Puts the bottom row and the app row where "Show row" wants them. Both rows are built once and only
+     * slide (translationY on a layer), so the move costs no layout or redraw, even on a slow TV.
+     */
+    private fun placeRow(animate: Boolean) {
+        val show = rowShow()
+        val has = watchList.isNotEmpty()
+        val keepSpace = show != "always" && !rowDrops() // "Stays put": the apps keep their place, even with no shows
+        // With no shows, an invisible stand-in card holds the row's height, so the apps don't fall to the bottom.
+        if (!has && keepSpace && watchRow.childCount == 0) watchRow.addView(watchCard(Prog(" ", " ", 0, null, null, null), false))
+        else if (!has && !keepSpace && watchRow.childCount > 0) watchRow.removeAllViews()
+        val vis = when {
+            !has -> if (keepSpace) View.INVISIBLE else View.GONE
+            show == "never" -> if (rowDrops()) View.GONE else View.INVISIBLE // invisible keeps its space
+            else -> View.VISIBLE
+        }
+        if (watchScroll.visibility != vis) { watchTitle.visibility = vis; watchScroll.visibility = vis }
+        val hidden = show == "down" && has && !rowOut
+        // From where the app row sits above the bottom row to where it would sit without it.
+        val drop = (watchScroll.bottom - appScroll.bottom).toFloat().coerceAtLeast(0f)
+        val appY = if (hidden && rowDrops()) drop else 0f
+        val rowY = if (!hidden) 0f else if (rowDrops()) drop else dp(24).toFloat()
+        fun move(v: View, y: Float, a: Float) {
+            if (v.translationY == y && v.alpha == a) return // a layer for a view that doesn't move only costs frames
+            if (animate) v.animate().translationY(y).alpha(a).setDuration(250).setInterpolator(DECELERATE).start()
+            else { v.animate().cancel(); v.translationY = y; v.alpha = a }
+        }
+        move(appsTitle, appY, appsTitle.alpha)
+        move(appScroll, appY, 1f)
+        move(watchTitle, rowY, if (hidden) 0f else titleAlpha)
+        move(watchScroll, rowY, if (hidden) 0f else 1f)
+    }
 
     /**
      * Cards exist up to index [last] only: the four on screen and the four after them, more as focus moves on.
@@ -3365,6 +3430,7 @@ class MainActivity : Activity() {
             "centre" to (R.string.align_centre to Gravity.CENTER_HORIZONTAL),
             "right" to (R.string.align_right to Gravity.END),
         )
+        val ROW_SHOW = linkedMapOf("always" to R.string.always, "down" to R.string.on_down, "never" to R.string.never) // "Show row"
         const val BADGE = 0xFFFF453A.toInt()
         // Dark mode tokens, for AMOLED: true black, and near-black cards that read as cards because their edge
         // catches light (brightest along the top), the way light-mode cards use a soft shadow.

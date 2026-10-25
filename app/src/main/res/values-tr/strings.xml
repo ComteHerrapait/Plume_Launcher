@@ -171,6 +171,11 @@
     <string name="check_updates">Güncellemeleri denetle</string>
     <string name="install_update">%1$s sürümünü yükle</string>
     <string name="row_position">Uygulama satırı konumu</string>
+    <string name="show_row">Satırı göster</string>
+    <string name="on_down">Aşağı ile</string>
+    <string name="apps_when_hidden">Gizliyken uygulama satırı</string>
+    <string name="stays_put">Yerinde kalır</string>
+    <string name="moves_down">Aşağı iner</string>
     <string name="align_left">Sol</string>
     <string name="align_centre">Orta</string>
     <string name="align_right">Sağ</string>

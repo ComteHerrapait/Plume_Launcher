@@ -178,6 +178,11 @@
     <string name="check_updates">التحقق من التحديثات</string>
     <string name="install_update">تثبيت %1$s</string>
     <string name="row_position">موضع صف التطبيقات</string>
+    <string name="show_row">إظهار الصف</string>
+    <string name="on_down">عند الضغط لأسفل</string>
+    <string name="apps_when_hidden">صف التطبيقات عند الإخفاء</string>
+    <string name="stays_put">يبقى مكانه</string>
+    <string name="moves_down">ينزل للأسفل</string>
     <string name="align_left">يسار</string>
     <string name="align_centre">وسط</string>
     <string name="align_right">يمين</string>
