@@ -2515,7 +2515,6 @@ class MainActivity : Activity() {
     private fun useGallery(folder: String?) {
         prefs.edit().putString("ss_folder", folder).apply()
         if (folder == null && !paintingsReady(this)) return downloadPaintings { useGallery(null) }
-        if (folder != null) paintingsDir(this).deleteRecursively() // not needed for photos: give the space back
         if (galleryOn()) return
         if (checkSelfPermission(WRITE_SECURE) != PackageManager.PERMISSION_GRANTED) {
             // Without the adb permission Plume can't switch it itself; Android's own list has getString(R.string.gallery).

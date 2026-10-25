@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
@@ -23,6 +24,7 @@ class HomeOverride : AccessibilityService() {
     }
 
     private val holds = HashMap<String, Hold>()
+    private var dreaming = false
 
     override fun onServiceConnected() {
         running = this
@@ -38,6 +40,10 @@ class HomeOverride : AccessibilityService() {
 
     override fun onKeyEvent(e: KeyEvent): Boolean {
         if (e.keyCode != KeyEvent.KEYCODE_HOME) return remap(e)
+        // Off: let the system wake the TV and run its own Home/CEC path.
+        if (!getSystemService(PowerManager::class.java).isInteractive) return false
+        // Dreaming: let the system stop the screensaver and handle Home.
+        if (isDreaming()) return false
         // Timed from the press, so a hold opens the dashboard while the key is still down; a tap goes home
         // on release. This TV's remote doesn't reliably send key repeats, so a timer is the only clock.
         if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0) {
@@ -106,10 +112,35 @@ class HomeOverride : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent) {
+        if (e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        // Screensavers can change the window without us seeing a Home key first.
+        dreaming = isDream(e.packageName, e.className)
         // Only the stock home screen: the dashboard, setup and onboarding screens must show.
-        if (e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && e.packageName == GOOGLE_TV &&
+        if (!dreaming && e.packageName == GOOGLE_TV &&
             e.className?.contains("HomeActivity", ignoreCase = true) == true
         ) goHome()
+    }
+
+    private fun isDream(pkg: CharSequence?, cls: CharSequence?): Boolean =
+        pkg?.contains("dream", ignoreCase = true) == true ||
+        cls?.contains("dream", ignoreCase = true) == true
+
+    /** The dream event may be missed; look at the current windows as a fallback. */
+    @Suppress("DEPRECATION")
+    private fun isDreaming(): Boolean {
+        if (dreaming) return true
+        return try {
+            windows.any { window ->
+                val root = window.root ?: return@any false
+                try {
+                    isDream(root.packageName, root.className)
+                } finally {
+                    root.recycle()
+                }
+            }
+        } catch (e: Exception) {
+            false
+        }
     }
 
     // Marked as Home so the setup check can tell it from Plume being opened from the apps list.

@@ -73,7 +73,7 @@ Plume's settings panel includes two setup rows:
 Allow the **TV listings** permission when asked; Continue Watching needs it.
 
 > [!NOTE]
-> Android shows the same generic warning for every accessibility service. Plume's service listens for the Home key, for the keys you set under **Remote keys** and for the system launcher appearing. It cannot read screen content.
+> Android shows the same generic warning for every accessibility service. Plume's service listens for the Home key, for the keys you set under **Remote keys**, the system launcher and the screensaver. It uses window package and class names to detect the launcher and screensaver; it does not read screen text.
 
 > [!TIP]
 > **Android 13 and newer:** Android blocks sideloaded apps from Accessibility at first. Open **Settings → Apps → Plume**, choose **Allow restricted settings** from the menu, then turn the service on.
