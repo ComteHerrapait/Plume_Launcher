@@ -213,6 +213,7 @@
     <string name="key_unset">Not set</string>
     <string name="key_block">Do nothing</string>
     <string name="key_hold_needs_press">Set a press action first</string>
+    <string name="inactive">Inactive</string>
     <string name="key_name">Name</string>
     <string name="key_name_hint">Button name</string>
     <string name="key_open_app">Open an app or input…</string>

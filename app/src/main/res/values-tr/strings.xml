@@ -179,6 +179,7 @@
     <string name="section_weather">Hava Durumu</string>
     <string name="section_screensaver">Ekran Koruyucu</string>
     <string name="section_home">Ana Ekran tuşu ve tuşlar</string>
+    <string name="inactive">Etkin değil</string>
     <string name="sources">Kaynaklar</string>
     <string name="no_signal">Sinyal yok</string>
     <string name="in_row">Satırda</string>

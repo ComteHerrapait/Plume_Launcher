@@ -104,19 +104,29 @@ object Remap {
         map = null
     }
 
-    /** Saves a key's actions; a key left with none is forgotten and goes back to its usual job. */
+    /** Saves a key's actions. Clearing both keeps the key as "Not set"; only [remove] deletes it. */
     fun put(c: Context, id: String, short: String, long: String) = put(store(c), id, short, long)
 
     internal fun put(p: SharedPreferences, id: String, short: String, long: String) {
         val m = all(p)
-        val editor = p.edit()
         if (short.isEmpty() && long.isEmpty()) {
-            m.remove(id)
-            editor.remove("keyname_$id") // the name belongs to the key: do not keep it as an orphan
+            if (id !in m) return
+            m[id] = Entry("", "")
         } else {
             m[id] = Entry(short, long)
         }
-        editor.putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" }).apply()
+        p.edit().putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" }).apply()
+    }
+
+    /** Removes a key and its custom name. */
+    fun remove(c: Context, id: String) = remove(store(c), id)
+
+    internal fun remove(p: SharedPreferences, id: String) {
+        val m = all(p)
+        m.remove(id)
+        p.edit().remove("keyname_$id")
+            .putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" })
+            .apply()
     }
 
     /** Whether this action can run on this device now. Media and the power menu stay best-effort. */

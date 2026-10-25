@@ -54,14 +54,48 @@ class RemapTest {
         check(Remap.all(p)) // from the saved string
     }
 
-    @Test fun aKeyWithNoPressAndNoHoldIsForgotten() {
+    @Test fun anUnnamedKeyWithNoActionsStaysNotSet() {
         val p = FakePrefs()
         Remap.put(p, "k183", "app:com.netflix.ninja", "")
         Remap.put(p, "k184", "none", "")
         Remap.put(p, "k183", "", "")
+        val keys = Remap.all(p)
+        assertEquals(listOf("k183", "k184"), keys.keys.toList())
+        assertEquals("", keys["k183"]!!.short)
+        assertEquals("", keys["k183"]!!.long)
+        assertEquals("none", keys["k184"]!!.short)
+        Remap.reset()
+        val saved = Remap.all(p)
+        assertEquals(listOf("k183", "k184"), saved.keys.toList())
+        assertEquals("", saved["k183"]!!.short)
+        assertEquals("", saved["k183"]!!.long)
+        assertEquals("none", saved["k184"]!!.short)
+    }
+
+    @Test fun aHoldSurvivesClearingPressAndTheKeyStaysWhenCleared() {
+        val p = FakePrefs()
+        Remap.put(p, "k188", "app:com.netflix.ninja", "sys:back")
+        Remap.put(p, "k188", "", "sys:back") // clearing Press keeps the saved Hold
+        val kept = Remap.all(p)["k188"]!!
+        assertEquals("", kept.short)
+        assertEquals("sys:back", kept.long)
+        Remap.put(p, "k188", "", "") // clearing the Hold leaves an empty key
+        val empty = Remap.all(p)["k188"]!!
+        assertEquals("", empty.short)
+        assertEquals("", empty.long)
+        Remap.reset()
+        val saved = Remap.all(p)["k188"]!!
+        assertEquals("", saved.short)
+        assertEquals("", saved.long)
+    }
+
+    @Test fun clearingAnAbsentKeyDoesNothing() {
+        val p = FakePrefs()
+        Remap.put(p, "k184", "none", "")
+        Remap.put(p, "k188", "", "")
         assertEquals(listOf("k184"), Remap.all(p).keys.toList())
         Remap.reset()
-        assertEquals(listOf("k184"), Remap.all(p).keys.toList()) // gone from the saved string too
+        assertEquals(listOf("k184"), Remap.all(p).keys.toList())
     }
 
     @Test fun aCustomNameOverridesTheAutomaticOneAndCanBeCleared() {
@@ -76,9 +110,26 @@ class RemapTest {
         val p = FakePrefs()
         Remap.put(p, "k188", "nav:up", "")
         Remap.rename(p, "k188", "UP replacement")
-        Remap.put(p, "k188", "", "")
+        Remap.remove(p, "k188")
         assertEquals(null, Remap.customName(p, "k188"))
         assertTrue(Remap.all(p).isEmpty())
+    }
+
+    @Test fun aNamedKeySurvivesClearingBothActions() {
+        val p = FakePrefs()
+        Remap.put(p, "k188", "app:com.netflix.ninja", "sys:back")
+        Remap.rename(p, "k188", "My button")
+        Remap.put(p, "k188", "", "sys:back") // clear Press
+        Remap.put(p, "k188", "", "") // clear Hold
+        val kept = Remap.all(p)["k188"]!!
+        assertEquals("", kept.short)
+        assertEquals("", kept.long)
+        assertEquals("My button", Remap.customName(p, "k188"))
+        Remap.reset()
+        val saved = Remap.all(p)["k188"]!!
+        assertEquals("", saved.short)
+        assertEquals("", saved.long)
+        assertEquals("My button", Remap.customName(p, "k188"))
     }
 
     @Test fun aCustomNameIsCapped() {

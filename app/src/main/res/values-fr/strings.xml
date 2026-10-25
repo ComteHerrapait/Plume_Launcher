@@ -208,6 +208,7 @@
     <string name="key_unset">Non réglée</string>
     <string name="key_block">Ne rien faire</string>
     <string name="key_hold_needs_press">Choisissez d\'abord une action sur appui</string>
+    <string name="inactive">Inactif</string>
     <string name="key_name">Nom</string>
     <string name="key_name_hint">Nom de la touche</string>
     <string name="key_open_app">Ouvrir une appli ou une entrée…</string>

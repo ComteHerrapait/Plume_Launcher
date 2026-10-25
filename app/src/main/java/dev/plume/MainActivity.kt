@@ -972,8 +972,9 @@ class MainActivity : Activity() {
         val keys = Remap.all(this).entries.toList()
         showPage(getString(R.string.section_keys),
             listOf(page(getString(R.string.key_add)) { learnKey() }) + keys.map { (id, e) ->
-                val summary = if (e.short.isEmpty() && e.long.isNotEmpty()) getString(R.string.key_hold_needs_press)
-                              else Remap.describe(this, e.short.ifEmpty { e.long })
+                val summary = if (e.short.isEmpty() && e.long.isNotEmpty())
+                    "${Remap.describe(this, e.long)} · ${getString(R.string.inactive)}"
+                else Remap.describe(this, e.short.ifEmpty { e.long })
                 page(Remap.name(this, id), summary) { keyPage(id) }
             }, focus) { renderSettings(R.string.section_keys) }
     }
@@ -996,14 +997,20 @@ class MainActivity : Activity() {
     private fun keyPage(id: String, focus: Int = 0) {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
         val pressSet = e.short.isNotEmpty()
+        val holdSaved = e.long.isNotEmpty()
         val holdHint = getString(R.string.key_hold_needs_press)
+        val holdValue = when {
+            pressSet -> Remap.describe(this, e.long)
+            holdSaved -> "${Remap.describe(this, e.long)} · ${getString(R.string.inactive)}"
+            else -> holdHint
+        }
         showPage(Remap.name(this, id), listOf(
             page(getString(R.string.key_short), Remap.describe(this, e.short)) { pickAction(id, false) },
-            page(getString(R.string.key_long), if (pressSet) Remap.describe(this, e.long) else holdHint) {
-                if (pressSet) pickAction(id, true) else toast(R.string.key_hold_needs_press)
+            page(getString(R.string.key_long), holdValue) {
+                if (pressSet || holdSaved) pickAction(id, true) else toast(R.string.key_hold_needs_press)
             },
             page(getString(R.string.key_name), Remap.customName(this, id) ?: getString(R.string.automatic)) { renameKey(id) },
-            page(getString(R.string.key_remove)) { Remap.put(this, id, "", ""); pickKeys() },
+            page(getString(R.string.key_remove)) { Remap.remove(this, id); pickKeys() },
         ), focus, muted = if (pressSet) emptySet() else setOf(1)) { pickKeys() }
     }
 
@@ -1029,12 +1036,17 @@ class MainActivity : Activity() {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
         if (hold && e.short.isEmpty() && action.isNotEmpty()) return toast(R.string.key_hold_needs_press)
         if (hold) Remap.put(this, id, e.short, action) else Remap.put(this, id, action, e.long)
-        keyPage(id, if (hold) 1 else 0)
+        if (Remap.all(this).containsKey(id)) keyPage(id, if (hold) 1 else 0) else pickKeys()
     }
 
     private fun pickAction(id: String, hold: Boolean) {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
-        if (hold && e.short.isEmpty()) return toast(R.string.key_hold_needs_press)
+        if (hold && e.short.isEmpty()) {
+            showPage(getString(R.string.key_long), listOf(
+                page(getString(R.string.key_unset), if (e.long.isEmpty()) CHOSEN else "") { setAction(id, true, "") },
+            )) { keyPage(id, 1) }
+            return
+        }
         val now = if (hold) e.long else e.short
         val rows = ArrayList<Triple<String, String, () -> Unit>>()
         val headers = LinkedHashMap<Int, String>()
