@@ -207,6 +207,8 @@
     <string name="key_long">Hold</string>
     <string name="key_unset">Not set</string>
     <string name="key_block">Do nothing</string>
+    <string name="key_name">Name</string>
+    <string name="key_name_hint">Button name</string>
     <string name="key_open_app">Open an app or input…</string>
     <string name="key_remove">Remove this key</string>
     <string name="key_number">Key %1$d</string>
@@ -223,6 +225,11 @@
     <string name="act_power">Power menu</string>
     <string name="act_settings">Android settings</string>
     <string name="act_network">Network settings</string>
+    <string name="act_up">Move up</string>
+    <string name="act_down">Move down</string>
+    <string name="act_left">Move left</string>
+    <string name="act_right">Move right</string>
+    <string name="act_select">Select</string>
     <plurals name="n_keys">
         <item quantity="one">%d key</item>
         <item quantity="other">%d keys</item>

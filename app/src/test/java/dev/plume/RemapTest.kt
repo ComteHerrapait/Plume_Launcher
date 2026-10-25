@@ -22,7 +22,7 @@ class RemapTest {
             override fun putLong(key: String?, value: Long) = throw UnsupportedOperationException()
             override fun putFloat(key: String?, value: Float) = throw UnsupportedOperationException()
             override fun putBoolean(key: String?, value: Boolean) = throw UnsupportedOperationException()
-            override fun remove(key: String?) = throw UnsupportedOperationException()
+            override fun remove(key: String?) = also { strings.remove(key) }
             override fun clear() = throw UnsupportedOperationException()
         }
         override fun getAll() = throw UnsupportedOperationException()
@@ -62,6 +62,29 @@ class RemapTest {
         assertEquals(listOf("k184"), Remap.all(p).keys.toList())
         Remap.reset()
         assertEquals(listOf("k184"), Remap.all(p).keys.toList()) // gone from the saved string too
+    }
+
+    @Test fun aCustomNameOverridesTheAutomaticOneAndCanBeCleared() {
+        val p = FakePrefs()
+        Remap.rename(p, "k188", "  UP replacement  ")
+        assertEquals("UP replacement", Remap.customName(p, "k188"))
+        Remap.rename(p, "k188", "   ")
+        assertEquals(null, Remap.customName(p, "k188"))
+    }
+
+    @Test fun removingAKeyForgetsItsName() {
+        val p = FakePrefs()
+        Remap.put(p, "k188", "nav:up", "")
+        Remap.rename(p, "k188", "UP replacement")
+        Remap.put(p, "k188", "", "")
+        assertEquals(null, Remap.customName(p, "k188"))
+        assertTrue(Remap.all(p).isEmpty())
+    }
+
+    @Test fun aCustomNameIsCapped() {
+        val p = FakePrefs()
+        Remap.rename(p, "k188", "x".repeat(40))
+        assertEquals(24, Remap.customName(p, "k188")!!.length)
     }
 
     @Test fun idFallsBackToTheScanCode() {

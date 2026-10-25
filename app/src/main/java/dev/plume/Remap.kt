@@ -7,14 +7,17 @@ import android.content.SharedPreferences
 import android.media.AudioManager
 import android.media.tv.TvContract
 import android.media.tv.TvInputManager
+import android.os.Build
 import android.provider.Settings
 import android.view.KeyEvent
 
 /**
  * Remote key remapping. Plume's Home key service already sees every key before any app does, so a key mapped
  * here is handled there: [Entry.short] runs on a press and [Entry.long] on a hold ("" when unset). An action is
- * "none" (swallow the key), "app:<package>", "hdmi:<input id>", "media:<name>", "sys:<name>" or "open:<place>" (Android's Settings).
+ * "none" (swallow the key), "app:<package>", "hdmi:<input id>", "media:<name>", "sys:<name>", "nav:<name>" or
+ * "open:<place>" (Android's Settings).
  * Kept in one preference string ("home"/"keymap", a line per key) and in memory only once a key is pressed.
+ * A custom display name is kept per key in "home"/"keyname_<id>".
  */
 object Remap {
     class Entry(val short: String, val long: String)
@@ -51,6 +54,15 @@ object Remap {
         "notifications" to (AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS to R.string.act_notifications),
         "quick" to (AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS to R.string.act_quick),
         "power" to (AccessibilityService.GLOBAL_ACTION_POWER_DIALOG to R.string.act_power),
+    )
+
+    /** Real D-pad events, so a working key can replace a broken arrow. These actions need Android 13 (API 33). */
+    val NAV = linkedMapOf(
+        "up" to (AccessibilityService.GLOBAL_ACTION_DPAD_UP to R.string.act_up),
+        "down" to (AccessibilityService.GLOBAL_ACTION_DPAD_DOWN to R.string.act_down),
+        "left" to (AccessibilityService.GLOBAL_ACTION_DPAD_LEFT to R.string.act_left),
+        "right" to (AccessibilityService.GLOBAL_ACTION_DPAD_RIGHT to R.string.act_right),
+        "center" to (AccessibilityService.GLOBAL_ACTION_DPAD_CENTER to R.string.act_select),
     )
 
     /** Places in Android's Settings that a key can open, though Settings is not in the apps list. */
@@ -92,8 +104,14 @@ object Remap {
 
     internal fun put(p: SharedPreferences, id: String, short: String, long: String) {
         val m = all(p)
-        if (short.isEmpty() && long.isEmpty()) m.remove(id) else m[id] = Entry(short, long)
-        p.edit().putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" }).apply()
+        val editor = p.edit()
+        if (short.isEmpty() && long.isEmpty()) {
+            m.remove(id)
+            editor.remove("keyname_$id") // the name belongs to the key: do not keep it as an orphan
+        } else {
+            m[id] = Entry(short, long)
+        }
+        editor.putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" }).apply()
     }
 
     fun run(s: AccessibilityService, action: String) {
@@ -110,6 +128,7 @@ object Remap {
                     audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
                 }
                 "sys" -> SYS[arg]?.let { (code, _) -> s.performGlobalAction(code) }
+                "nav" -> if (Build.VERSION.SDK_INT >= 33) NAV[arg]?.let { (code, _) -> s.performGlobalAction(code) }
                 "open" -> OPEN[arg]?.let { (action, _) -> s.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             }
         } catch (e: Exception) {
@@ -117,12 +136,29 @@ object Remap {
         }
     }
 
-    /** What a key is called in the list: "Media play pause" for Android's own codes, "Key 4001" for the rest. */
+    /** What a key is called in the list: its custom name, else "Media play pause" for Android's own codes, "Key 4001" for the rest. */
     fun name(c: Context, id: String): String {
+        customName(c, id)?.let { return it }
         val n = id.substring(1).toInt()
         val s = if (id[0] == 'k') KeyEvent.keyCodeToString(n) else ""
         return if (s.startsWith("KEYCODE_")) s.substring(8).lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
         else c.getString(R.string.key_number, n)
+    }
+
+    /** The user's own name for a key, or null when it uses its automatic name. */
+    fun customName(c: Context, id: String) = customName(store(c), id)
+
+    internal fun customName(p: SharedPreferences, id: String): String? =
+        p.getString("keyname_$id", null)?.takeIf { it.isNotEmpty() }
+
+    /** Saves a custom name; a blank name restores the automatic one. */
+    fun rename(c: Context, id: String, name: String) = rename(store(c), id, name)
+
+    internal fun rename(p: SharedPreferences, id: String, name: String) {
+        val clean = name.trim().replace('\n', ' ').replace('\t', ' ').take(NAME_MAX).trim()
+        p.edit().apply {
+            if (clean.isEmpty()) remove("keyname_$id") else putString("keyname_$id", clean)
+        }.apply()
     }
 
     fun describe(c: Context, action: String): String {
@@ -142,8 +178,12 @@ object Remap {
             }
             "media" -> MEDIA[arg]?.let { c.getString(it.second) } ?: arg
             "sys" -> SYS[arg]?.let { c.getString(it.second) } ?: arg
+            "nav" -> NAV[arg]?.let { c.getString(it.second) } ?: arg
             "open" -> OPEN[arg]?.let { c.getString(it.second) } ?: arg
             else -> action
         }
     }
+
+    private const val NAME_MAX = 24
 }
+

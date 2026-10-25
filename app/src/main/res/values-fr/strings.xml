@@ -202,6 +202,8 @@
     <string name="key_long">Appui long</string>
     <string name="key_unset">Non réglée</string>
     <string name="key_block">Ne rien faire</string>
+    <string name="key_name">Nom</string>
+    <string name="key_name_hint">Nom de la touche</string>
     <string name="key_open_app">Ouvrir une appli ou une entrée…</string>
     <string name="key_remove">Retirer cette touche</string>
     <string name="key_number">Touche %1$d</string>
@@ -218,6 +220,11 @@
     <string name="act_power">Menu d\'alimentation</string>
     <string name="act_settings">Paramètres Android</string>
     <string name="act_network">Paramètres réseau</string>
+    <string name="act_up">Monter</string>
+    <string name="act_down">Descendre</string>
+    <string name="act_left">Gauche</string>
+    <string name="act_right">Droite</string>
+    <string name="act_select">Sélectionner</string>
     <plurals name="n_keys">
         <item quantity="one">%d touche</item>
         <item quantity="other">%d touches</item>

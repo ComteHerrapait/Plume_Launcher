@@ -996,8 +996,26 @@ class MainActivity : Activity() {
         showPage(Remap.name(this, id), listOf(
             page(getString(R.string.key_short), Remap.describe(this, e.short)) { pickAction(id, false) },
             page(getString(R.string.key_long), Remap.describe(this, e.long)) { pickAction(id, true) },
+            page(getString(R.string.key_name), Remap.customName(this, id) ?: getString(R.string.automatic)) { renameKey(id) },
             page(getString(R.string.key_remove)) { Remap.put(this, id, "", ""); pickKeys() },
         ), focus) { pickKeys() }
+    }
+
+    /** Renames a key. An empty name, or Automatic, brings back the name Android gives it ("Button 4"). */
+    private fun renameKey(id: String) {
+        val custom = Remap.customName(this, id)
+        val field = textField(custom.orEmpty(), Remap.name(this, id), InputType.TYPE_TEXT_FLAG_CAP_WORDS, EditorInfo.IME_ACTION_DONE) { name ->
+            Remap.rename(this, id, name)
+            keyPage(id, 2)
+        }
+        showPage(getString(R.string.key_name), listOf(
+            page(getString(R.string.automatic), if (custom == null) CHOSEN else "") {
+                Remap.rename(this, id, "")
+                keyPage(id, 2)
+            },
+        ), top = field.parent as View) { keyPage(id, 2) }
+        settingsList.getChildAt(1).nextFocusUpId = field.id
+        field.requestFocus()
     }
 
     /** Saves [action] as what [id] does on a press (or a hold) and returns to the key's page. */
@@ -1011,6 +1029,8 @@ class MainActivity : Activity() {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
         val now = if (hold) e.long else e.short
         fun row(action: String, name: String) = page(name, if (action == now) CHOSEN else "") { setAction(id, hold, action) }
+        // D-pad actions exist from Android 13; older TVs do not know them, so do not offer them there.
+        val nav = if (Build.VERSION.SDK_INT >= 33) Remap.NAV.map { (k, v) -> row("nav:$k", getString(v.second)) } else emptyList()
         val rows = listOf(
             row("", getString(R.string.key_unset)),
             row("none", getString(R.string.key_block)),
@@ -1019,6 +1039,7 @@ class MainActivity : Activity() {
             },
         ) + Remap.MEDIA.map { (k, v) -> row("media:$k", getString(v.second)) } +
             Remap.SYS.map { (k, v) -> row("sys:$k", getString(v.second)) } +
+            nav +
             Remap.OPEN.map { (k, v) -> row("open:$k", getString(v.second)) }
         showPage(getString(if (hold) R.string.key_long else R.string.key_short), rows) { keyPage(id, if (hold) 1 else 0) }
     }
