@@ -1031,13 +1031,16 @@ class MainActivity : Activity() {
         fun row(action: String, name: String) = page(name, if (action == now) CHOSEN else "") { setAction(id, hold, action) }
         // D-pad actions exist from Android 13; older TVs do not know them, so do not offer them there.
         val nav = if (Build.VERSION.SDK_INT >= 33) Remap.NAV.map { (k, v) -> row("nav:$k", getString(v.second)) } else emptyList()
+        // Google TV's smart home panel: only where the panel exists.
+        val panel = if (Remap.panelAvailable(this)) listOf(row("panel:home", getString(R.string.act_home_panel))) else emptyList()
         val rows = listOf(
             row("", getString(R.string.key_unset)),
             row("none", getString(R.string.key_block)),
             page(getString(R.string.key_open_app), if (now.startsWith("app:") || now.startsWith("hdmi:")) Remap.describe(this, now) else "") {
                 pickApp(id, hold, now)
             },
-        ) + Remap.MEDIA.map { (k, v) -> row("media:$k", getString(v.second)) } +
+        ) + panel +
+            Remap.MEDIA.map { (k, v) -> row("media:$k", getString(v.second)) } +
             Remap.SYS.map { (k, v) -> row("sys:$k", getString(v.second)) } +
             nav +
             Remap.OPEN.map { (k, v) -> row("open:$k", getString(v.second)) }

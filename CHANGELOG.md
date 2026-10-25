@@ -24,6 +24,7 @@ Put changes that are not released under `## Unreleased`. Rename that heading to 
 - **Uninstall an app.** Hold **OK** on an app in the row. Select **Uninstall**. Plume does not show this for system apps, for Plume, or when the layout is locked.
 - **Plume settings → App row → Icon style** has a new choice, **Banner**. Each app shows its own picture, as on Apple TV. An app with no banner gets its own colour behind a white mark. Monochrome stays the default.
 - **Plume settings → App row → Icon style** has a fourth choice, **Monochrome banner**. The pictures are grey until you select one. An app with no banner gets its own colour behind a white mark, as with **Banner**.
+- **Google Home panel.** Set a remote key to open the Google TV smart home panel. Select **Plume settings → Remote keys**. Add your lights and routines to Favorites in the Google Home app first.
 
 ## 1.5
 

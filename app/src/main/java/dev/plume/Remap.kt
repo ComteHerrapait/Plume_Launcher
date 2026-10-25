@@ -14,8 +14,8 @@ import android.view.KeyEvent
 /**
  * Remote key remapping. Plume's Home key service already sees every key before any app does, so a key mapped
  * here is handled there: [Entry.short] runs on a press and [Entry.long] on a hold ("" when unset). An action is
- * "none" (swallow the key), "app:<package>", "hdmi:<input id>", "media:<name>", "sys:<name>", "nav:<name>" or
- * "open:<place>" (Android's Settings).
+ * "none" (swallow the key), "app:<package>", "hdmi:<input id>", "media:<name>", "sys:<name>", "nav:<name>",
+ * "open:<place>" (Android's Settings) or "panel:home" (Google TV's smart home panel).
  * Kept in one preference string ("home"/"keymap", a line per key) and in memory only once a key is pressed.
  * A custom display name is kept per key in "home"/"keyname_<id>".
  */
@@ -82,6 +82,11 @@ object Remap {
 
     internal fun kept(keyCode: Int, scanCode: Int) = keyCode in KEEP || (keyCode == KeyEvent.KEYCODE_UNKNOWN && scanCode == 0)
 
+    /** Whether this device has the Google TV smart-home panel. */
+    fun panelAvailable(c: Context) = c.packageManager.queryIntentActivities(
+        Intent(SMART_HOME).setPackage(SMART_HOME_PACKAGE).addCategory(Intent.CATEGORY_DEFAULT), 0
+    ).isNotEmpty()
+
     private fun store(c: Context) = c.getSharedPreferences("home", Context.MODE_PRIVATE)
 
     fun all(c: Context) = all(store(c))
@@ -130,6 +135,10 @@ object Remap {
                 "sys" -> SYS[arg]?.let { (code, _) -> s.performGlobalAction(code) }
                 "nav" -> if (Build.VERSION.SDK_INT >= 33) NAV[arg]?.let { (code, _) -> s.performGlobalAction(code) }
                 "open" -> OPEN[arg]?.let { (action, _) -> s.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                "panel" -> if (arg == "home") s.startActivity(
+                    Intent(SMART_HOME).setPackage(SMART_HOME_PACKAGE).addCategory(Intent.CATEGORY_DEFAULT)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("trigger_source", SMART_HOME_SOURCE)
+                )
             }
         } catch (e: Exception) {
             // An app that's gone, or an input that's unplugged: the key just does nothing.
@@ -180,9 +189,14 @@ object Remap {
             "sys" -> SYS[arg]?.let { c.getString(it.second) } ?: arg
             "nav" -> NAV[arg]?.let { c.getString(it.second) } ?: arg
             "open" -> OPEN[arg]?.let { c.getString(it.second) } ?: arg
+            "panel" -> c.getString(R.string.act_home_panel)
             else -> action
         }
     }
+
+    private const val SMART_HOME = "com.google.android.libraries.tv.smarthome.intent.action.OPEN_SMART_HOME"
+    private const val SMART_HOME_PACKAGE = "com.google.android.apps.tv.dreamx"
+    private const val SMART_HOME_SOURCE = 5 // the remote's Google Home button
 
     private const val NAME_MAX = 24
 }

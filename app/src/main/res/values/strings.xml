@@ -225,6 +225,7 @@
     <string name="act_power">Power menu</string>
     <string name="act_settings">Android settings</string>
     <string name="act_network">Network settings</string>
+    <string name="act_home_panel">Google Home panel</string>
     <string name="act_up">Move up</string>
     <string name="act_down">Move down</string>
     <string name="act_left">Move left</string>

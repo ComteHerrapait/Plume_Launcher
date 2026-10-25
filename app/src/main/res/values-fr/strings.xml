@@ -220,6 +220,7 @@
     <string name="act_power">Menu d\'alimentation</string>
     <string name="act_settings">Paramètres Android</string>
     <string name="act_network">Paramètres réseau</string>
+    <string name="act_home_panel">Panneau Google Home</string>
     <string name="act_up">Monter</string>
     <string name="act_down">Descendre</string>
     <string name="act_left">Gauche</string>

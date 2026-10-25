@@ -130,9 +130,12 @@ Android 13 and newer grey out the Accessibility switch for apps installed outsid
 - a media key: Play / Pause, Next, Previous, Stop, Rewind or Fast-forward
 - a system action: Back, Recent apps, Notifications, Quick settings or the Power menu
 - open **Android settings** or **Network settings**
+- open the **Google Home panel** (Google TV only)
 - **Do nothing**
 
 Back, OK, the arrows, Home, Power and the volume keys can't be changed, so the remote can't be locked out and keeps its volume. A key you set stops doing its usual job. **Remove this key** gives it back. The keys work through the Home button service, so **Plume: Home button** must be on in Accessibility settings.
+
+The **Google Home panel** action opens the Google TV smart-home panel. Add your lights and routines to Favorites in the Google Home app first.
 
 ### Custom wallpapers
 
