@@ -118,22 +118,26 @@ Android 13 and newer grey out the Accessibility switch for apps installed outsid
 | Show app names always, on focus or never | **Settings → App names** |
 | Switch between monochrome icons, colour icons and app banners | **Settings → Icon style** |
 | Update Plume | **Settings → Updates** |
-| Change what a remote key does | **Plume settings → Remote keys** |
+| Change what a remote key does | **Plume settings → Home button & remote keys → Remote keys** |
 | Lock the layout with a PIN | **Settings → Lock layout** |
 | Open the Google TV dashboard | Hold the **Home** button |
 
 ### Remote keys
 
-**Plume settings → Remote keys → Add a key**, then press the key on your remote. Plume detects it. For each key, choose what a **Press** does and what a **Hold** does:
+**Plume settings → Home button & remote keys → Remote keys → Add a key**, then press the key on your remote. Plume detects it. For each key, choose what a **Press** does and what a **Hold** does:
 
 - open an app or an HDMI input (**Open an app or input…**)
-- a media key: Play / Pause, Next, Previous, Stop, Rewind or Fast-forward
-- a system action: Back, Recent apps, Notifications, Quick settings or the Power menu
-- open **Android settings** or **Network settings**
+- a media key: Play / Pause, Next, Previous, Rewind or Fast-forward
+- a system action: Back, the **Google TV dashboard** or the Power menu
+- open **Android settings**, **Network settings** or **Google Assistant**
 - open the **Google Home panel** (Google TV only)
 - **Do nothing**
 
-Back, OK, the arrows, Home, Power and the volume keys can't be changed, so the remote can't be locked out and keeps its volume. A key you set stops doing its usual job. **Remove this key** gives it back. The keys work through the Home button service, so **Plume: Home button** must be on in Accessibility settings.
+A key needs a Press action before it can have a Hold action. Clearing Press returns the whole key to its normal job; the Hold stays saved but is greyed out and inactive until you set Press again.
+
+Back, OK, the arrows, Home, Power and volume up/down can't be changed, so the remote can't be locked out and keeps its volume. Mute can be changed. The Google Assistant button is handled by the TV before Plume sees it, so it can't be remapped.
+
+A key you set stops doing its usual job. **Remove this key** gives it back. The keys work through the Home button service, so **Plume: Home button** must be on in Accessibility settings.
 
 The **Google Home panel** action opens the Google TV smart-home panel. Add your lights and routines to Favorites in the Google Home app first.
 
@@ -179,7 +183,7 @@ Plume has no analytics, no ads and no account. It only connects to the internet 
 <details>
 <summary><b>The Home button still opens the old home screen</b></summary>
 
-Check that **Settings → Home button** shows **On**. If the app was force-stopped, Android turns its accessibility service off; open Plume once (or grant the optional adb permission above) to restore it.
+Check that **Settings → Home button & remote keys** shows **On**. If the app was force-stopped, Android turns its accessibility service off; open Plume once (or grant the optional adb permission above) to restore it.
 </details>
 
 <details>

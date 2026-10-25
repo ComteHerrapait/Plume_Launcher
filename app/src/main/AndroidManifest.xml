@@ -33,6 +33,17 @@
             <action android:name="com.google.android.libraries.tv.smarthome.intent.action.OPEN_SMART_HOME" />
             <category android:name="android.intent.category.DEFAULT" />
         </intent>
+        <!-- Android settings, opened from a remote key; lets available() resolve them. -->
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.WIFI_SETTINGS" />
+        </intent>
+        <!-- The voice assistant, opened from a remote key. -->
+        <intent>
+            <action android:name="android.intent.action.ASSIST" />
+        </intent>
     </queries>
 
     <application

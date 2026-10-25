@@ -64,13 +64,15 @@ class HomeOverride : AccessibilityService() {
             return true
         }
         val m = Remap.all(this)[id] ?: return false
+        // A hold needs a press. Without one, leave the whole key to its normal job: no listener, no timer.
+        if (m.short.isEmpty()) { cancel(id); return false }
         // The long action runs on its timer while the key is held; a short press runs on release. This TV's
         // remote doesn't reliably send key repeats, so a timer is the only clock.
         if (e.action == KeyEvent.ACTION_DOWN) {
             if (e.repeatCount == 0) {
                 if (m.long.isNotEmpty()) hold(id) { Remap.run(this, m.long) } else cancel(id)
             }
-        } else if (e.action == KeyEvent.ACTION_UP && !end(id) && !e.isCanceled && m.short.isNotEmpty()) {
+        } else if (e.action == KeyEvent.ACTION_UP && !end(id) && !e.isCanceled) {
             Remap.run(this, m.short)
         }
         return true

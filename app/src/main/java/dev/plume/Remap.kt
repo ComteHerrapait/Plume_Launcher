@@ -10,6 +10,7 @@ import android.media.tv.TvInputManager
 import android.os.Build
 import android.provider.Settings
 import android.view.KeyEvent
+import android.widget.Toast
 
 /**
  * Remote key remapping. Plume's Home key service already sees every key before any app does, so a key mapped
@@ -31,11 +32,12 @@ object Remap {
     private var map: LinkedHashMap<String, Entry>? = null
 
     // Keys that move around Plume or leave it: never learned, never changed, so a remote can't be locked out.
+    // Mute is not here: a user can give that button a job and still keep volume up/down.
     private val KEEP = intArrayOf(
         KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
         KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_BACK,
         KeyEvent.KEYCODE_HOME, KeyEvent.KEYCODE_POWER, KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN,
-        KeyEvent.KEYCODE_VOLUME_MUTE, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_TAB,
+        KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_TAB,
         KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_BUTTON_SELECT,
     )
 
@@ -43,16 +45,13 @@ object Remap {
         "playpause" to (KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE to R.string.act_play_pause),
         "next" to (KeyEvent.KEYCODE_MEDIA_NEXT to R.string.act_next),
         "previous" to (KeyEvent.KEYCODE_MEDIA_PREVIOUS to R.string.act_previous),
-        "stop" to (KeyEvent.KEYCODE_MEDIA_STOP to R.string.act_stop),
         "rewind" to (KeyEvent.KEYCODE_MEDIA_REWIND to R.string.act_rewind),
         "forward" to (KeyEvent.KEYCODE_MEDIA_FAST_FORWARD to R.string.act_forward),
     )
 
     val SYS = linkedMapOf(
         "back" to (AccessibilityService.GLOBAL_ACTION_BACK to R.string.act_back),
-        "recents" to (AccessibilityService.GLOBAL_ACTION_RECENTS to R.string.act_recents),
         "notifications" to (AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS to R.string.act_notifications),
-        "quick" to (AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS to R.string.act_quick),
         "power" to (AccessibilityService.GLOBAL_ACTION_POWER_DIALOG to R.string.act_power),
     )
 
@@ -65,10 +64,11 @@ object Remap {
         "center" to (AccessibilityService.GLOBAL_ACTION_DPAD_CENTER to R.string.act_select),
     )
 
-    /** Places in Android's Settings that a key can open, though Settings is not in the apps list. */
+    /** Places outside the apps list: Android settings, network settings and the voice assistant. */
     val OPEN = linkedMapOf(
         "settings" to (Settings.ACTION_SETTINGS to R.string.act_settings),
         "network" to (Settings.ACTION_WIFI_SETTINGS to R.string.act_network),
+        "assistant" to (Intent.ACTION_ASSIST to R.string.act_assistant),
     )
 
     /** A key's identity: its Android code, or its scan code for keys Android has no code for. */
@@ -119,12 +119,38 @@ object Remap {
         editor.putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" }).apply()
     }
 
+    /** Whether this action can run on this device now. Media and the power menu stay best-effort. */
+    fun available(c: Context, action: String): Boolean {
+        val arg = action.substringAfter(':', "")
+        return try {
+            when (action.substringBefore(':')) {
+                "" -> false
+                "none" -> true
+                "app" -> launchIntent(c, arg) != null
+                "hdmi" -> c.getSystemService(TvInputManager::class.java).getTvInputInfo(arg) != null
+                "media" -> arg in MEDIA
+                "sys" -> arg in SYS
+                "nav" -> Build.VERSION.SDK_INT >= 33 && arg in NAV
+                "open" -> OPEN[arg]?.let { c.packageManager.resolveActivity(Intent(it.first), 0) != null } ?: false
+                "panel" -> arg == "home" && panelAvailable(c)
+                else -> false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun launchIntent(c: Context, pkg: String) =
+        c.packageManager.getLeanbackLaunchIntentForPackage(pkg) ?: c.packageManager.getLaunchIntentForPackage(pkg)
+
     fun run(s: AccessibilityService, action: String) {
+        if (action == "none") return
+        if (!available(s, action)) return showToast(s, R.string.action_unavailable)
         val arg = action.substringAfter(':', "")
         try {
             when (action.substringBefore(':')) {
-                "app" -> (s.packageManager.getLeanbackLaunchIntentForPackage(arg) ?: s.packageManager.getLaunchIntentForPackage(arg))
-                    ?.let { s.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                "app" -> launchIntent(s, arg)?.let { s.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    ?: showToast(s, R.string.action_unavailable)
                 "hdmi" -> s.startActivity(Intent(Intent.ACTION_VIEW, TvContract.buildChannelUriForPassthroughInput(arg))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 "media" -> MEDIA[arg]?.let { (code, _) ->
@@ -132,17 +158,26 @@ object Remap {
                     audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
                     audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
                 }
-                "sys" -> SYS[arg]?.let { (code, _) -> s.performGlobalAction(code) }
-                "nav" -> if (Build.VERSION.SDK_INT >= 33) NAV[arg]?.let { (code, _) -> s.performGlobalAction(code) }
+                "sys" -> SYS[arg]?.let { (code, _) ->
+                    if (!s.performGlobalAction(code)) showToast(s, R.string.action_unavailable)
+                }
+                "nav" -> if (Build.VERSION.SDK_INT >= 33) NAV[arg]?.let { (code, _) ->
+                    if (!s.performGlobalAction(code)) showToast(s, R.string.action_unavailable)
+                } else showToast(s, R.string.action_unavailable)
                 "open" -> OPEN[arg]?.let { (action, _) -> s.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                 "panel" -> if (arg == "home") s.startActivity(
                     Intent(SMART_HOME).setPackage(SMART_HOME_PACKAGE).addCategory(Intent.CATEGORY_DEFAULT)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("trigger_source", SMART_HOME_SOURCE)
-                )
+                ) else showToast(s, R.string.action_unavailable)
             }
         } catch (e: Exception) {
-            // An app that's gone, or an input that's unplugged: the key just does nothing.
+            // An app that's gone, or an input that's unplugged: tell the user instead of doing nothing.
+            showToast(s, R.string.action_failed)
         }
+    }
+
+    private fun showToast(c: Context, message: Int) {
+        Toast.makeText(c, message, Toast.LENGTH_SHORT).show()
     }
 
     /** What a key is called in the list: its custom name, else "Media play pause" for Android's own codes, "Key 4001" for the rest. */
@@ -171,26 +206,27 @@ object Remap {
     }
 
     fun describe(c: Context, action: String): String {
+        if (action.isEmpty()) return c.getString(R.string.key_unset)
+        if (action == "none") return c.getString(R.string.key_block)
+        if (!available(c, action)) return c.getString(R.string.action_unavailable)
         val arg = action.substringAfter(':', "")
         return when (action.substringBefore(':')) {
-            "" -> c.getString(R.string.key_unset)
-            "none" -> c.getString(R.string.key_block)
             "app" -> try {
                 c.packageManager.getApplicationLabel(c.packageManager.getApplicationInfo(arg, 0)).toString()
             } catch (e: Exception) {
-                arg
+                c.getString(R.string.action_unavailable)
             }
             "hdmi" -> try {
                 c.getSystemService(TvInputManager::class.java).getTvInputInfo(arg)!!.loadLabel(c).toString()
             } catch (e: Exception) {
-                "HDMI"
+                c.getString(R.string.action_unavailable)
             }
-            "media" -> MEDIA[arg]?.let { c.getString(it.second) } ?: arg
-            "sys" -> SYS[arg]?.let { c.getString(it.second) } ?: arg
-            "nav" -> NAV[arg]?.let { c.getString(it.second) } ?: arg
-            "open" -> OPEN[arg]?.let { c.getString(it.second) } ?: arg
+            "media" -> MEDIA[arg]?.let { c.getString(it.second) } ?: c.getString(R.string.action_unavailable)
+            "sys" -> SYS[arg]?.let { c.getString(it.second) } ?: c.getString(R.string.action_unavailable)
+            "nav" -> NAV[arg]?.let { c.getString(it.second) } ?: c.getString(R.string.action_unavailable)
+            "open" -> OPEN[arg]?.let { c.getString(it.second) } ?: c.getString(R.string.action_unavailable)
             "panel" -> c.getString(R.string.act_home_panel)
-            else -> action
+            else -> c.getString(R.string.action_unavailable)
         }
     }
 

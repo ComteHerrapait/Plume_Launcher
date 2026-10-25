@@ -40,12 +40,12 @@ class RemapTest {
 
     @Test fun putThenAllGivesBackTheSameEntries() {
         val p = FakePrefs()
-        Remap.put(p, "k183", "app:com.netflix.ninja", "sys:recents")
+        Remap.put(p, "k183", "app:com.netflix.ninja", "sys:back")
         Remap.put(p, "s4001", "media:playpause", "")
         fun check(read: Map<String, Remap.Entry>) {
             assertEquals(listOf("k183", "s4001"), read.keys.toList())
             assertEquals("app:com.netflix.ninja", read["k183"]!!.short)
-            assertEquals("sys:recents", read["k183"]!!.long)
+            assertEquals("sys:back", read["k183"]!!.long)
             assertEquals("media:playpause", read["s4001"]!!.short)
             assertEquals("", read["s4001"]!!.long)
         }
@@ -87,6 +87,12 @@ class RemapTest {
         assertEquals(24, Remap.customName(p, "k188")!!.length)
     }
 
+    @Test fun actionsThatDoNotWorkOnTvAreNotOffered() {
+        assertFalse("recents" in Remap.SYS)
+        assertFalse("quick" in Remap.SYS)
+        assertFalse("stop" in Remap.MEDIA)
+    }
+
     @Test fun idFallsBackToTheScanCode() {
         assertEquals("k183", Remap.id(KeyEvent.KEYCODE_PROG_RED, 398))
         assertEquals("s398", Remap.id(KeyEvent.KEYCODE_UNKNOWN, 398))
@@ -97,7 +103,7 @@ class RemapTest {
         assertTrue(Remap.kept(KeyEvent.KEYCODE_POWER, 116))
         assertTrue(Remap.kept(KeyEvent.KEYCODE_VOLUME_UP, 115))
         assertTrue(Remap.kept(KeyEvent.KEYCODE_VOLUME_DOWN, 114))
-        assertTrue(Remap.kept(KeyEvent.KEYCODE_VOLUME_MUTE, 113))
+        assertFalse(Remap.kept(KeyEvent.KEYCODE_VOLUME_MUTE, 113)) // mute can be given a new job
         assertTrue(Remap.kept(KeyEvent.KEYCODE_UNKNOWN, 0)) // no code at all: every such key would share one identity
         assertFalse(Remap.kept(KeyEvent.KEYCODE_UNKNOWN, 398)) // a scan code is enough to tell it apart
         assertFalse(Remap.kept(KeyEvent.KEYCODE_PROG_RED, 398))

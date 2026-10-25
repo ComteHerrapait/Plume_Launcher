@@ -972,7 +972,9 @@ class MainActivity : Activity() {
         val keys = Remap.all(this).entries.toList()
         showPage(getString(R.string.section_keys),
             listOf(page(getString(R.string.key_add)) { learnKey() }) + keys.map { (id, e) ->
-                page(Remap.name(this, id), Remap.describe(this, e.short.ifEmpty { e.long })) { keyPage(id) }
+                val summary = if (e.short.isEmpty() && e.long.isNotEmpty()) getString(R.string.key_hold_needs_press)
+                              else Remap.describe(this, e.short.ifEmpty { e.long })
+                page(Remap.name(this, id), summary) { keyPage(id) }
             }, focus) { renderSettings(R.string.section_keys) }
     }
 
@@ -993,12 +995,16 @@ class MainActivity : Activity() {
 
     private fun keyPage(id: String, focus: Int = 0) {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
+        val pressSet = e.short.isNotEmpty()
+        val holdHint = getString(R.string.key_hold_needs_press)
         showPage(Remap.name(this, id), listOf(
             page(getString(R.string.key_short), Remap.describe(this, e.short)) { pickAction(id, false) },
-            page(getString(R.string.key_long), Remap.describe(this, e.long)) { pickAction(id, true) },
+            page(getString(R.string.key_long), if (pressSet) Remap.describe(this, e.long) else holdHint) {
+                if (pressSet) pickAction(id, true) else toast(R.string.key_hold_needs_press)
+            },
             page(getString(R.string.key_name), Remap.customName(this, id) ?: getString(R.string.automatic)) { renameKey(id) },
             page(getString(R.string.key_remove)) { Remap.put(this, id, "", ""); pickKeys() },
-        ), focus) { pickKeys() }
+        ), focus, muted = if (pressSet) emptySet() else setOf(1)) { pickKeys() }
     }
 
     /** Renames a key. An empty name, or Automatic, brings back the name Android gives it ("Button 4"). */
@@ -1021,30 +1027,50 @@ class MainActivity : Activity() {
     /** Saves [action] as what [id] does on a press (or a hold) and returns to the key's page. */
     private fun setAction(id: String, hold: Boolean, action: String) {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
+        if (hold && e.short.isEmpty() && action.isNotEmpty()) return toast(R.string.key_hold_needs_press)
         if (hold) Remap.put(this, id, e.short, action) else Remap.put(this, id, action, e.long)
         keyPage(id, if (hold) 1 else 0)
     }
 
     private fun pickAction(id: String, hold: Boolean) {
         val e = Remap.all(this)[id] ?: Remap.Entry("", "")
+        if (hold && e.short.isEmpty()) return toast(R.string.key_hold_needs_press)
         val now = if (hold) e.long else e.short
-        fun row(action: String, name: String) = page(name, if (action == now) CHOSEN else "") { setAction(id, hold, action) }
-        // D-pad actions exist from Android 13; older TVs do not know them, so do not offer them there.
-        val nav = if (Build.VERSION.SDK_INT >= 33) Remap.NAV.map { (k, v) -> row("nav:$k", getString(v.second)) } else emptyList()
-        // Google TV's smart home panel: only where the panel exists.
-        val panel = if (Remap.panelAvailable(this)) listOf(row("panel:home", getString(R.string.act_home_panel))) else emptyList()
-        val rows = listOf(
-            row("", getString(R.string.key_unset)),
-            row("none", getString(R.string.key_block)),
-            page(getString(R.string.key_open_app), if (now.startsWith("app:") || now.startsWith("hdmi:")) Remap.describe(this, now) else "") {
-                pickApp(id, hold, now)
-            },
-        ) + panel +
-            Remap.MEDIA.map { (k, v) -> row("media:$k", getString(v.second)) } +
-            Remap.SYS.map { (k, v) -> row("sys:$k", getString(v.second)) } +
-            nav +
-            Remap.OPEN.map { (k, v) -> row("open:$k", getString(v.second)) }
-        showPage(getString(if (hold) R.string.key_long else R.string.key_short), rows) { keyPage(id, if (hold) 1 else 0) }
+        val rows = ArrayList<Triple<String, String, () -> Unit>>()
+        val headers = LinkedHashMap<Int, String>()
+        fun header(res: Int) { headers[rows.size] = getString(res) }
+        fun actionRow(action: String, label: Int) {
+            rows += page(getString(label), if (action == now) CHOSEN else "") { setAction(id, hold, action) }
+        }
+
+        header(R.string.group_apps)
+        rows += page(getString(R.string.key_open_app), if (now.startsWith("app:") || now.startsWith("hdmi:")) Remap.describe(this, now) else "") {
+            pickApp(id, hold, now)
+        }
+
+        header(R.string.group_system)
+        val panel = Remap.panelAvailable(this)
+        Remap.SYS.forEach { (k, v) ->
+            actionRow("sys:$k", v.second)
+            if (k == "notifications" && panel) actionRow("panel:home", R.string.act_home_panel)
+        }
+        Remap.OPEN.forEach { (k, v) -> if (Remap.available(this, "open:$k")) actionRow("open:$k", v.second) }
+
+        header(R.string.group_media)
+        Remap.MEDIA.forEach { (k, v) -> actionRow("media:$k", v.second) }
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            header(R.string.group_nav)
+            Remap.NAV.forEach { (k, v) -> actionRow("nav:$k", v.second) }
+        }
+
+        header(R.string.group_other)
+        actionRow("", R.string.key_unset)
+        actionRow("none", R.string.key_block)
+
+        showPage(getString(if (hold) R.string.key_long else R.string.key_short), rows, headers = headers) {
+            keyPage(id, if (hold) 1 else 0)
+        }
     }
 
     private fun pickApp(id: String, hold: Boolean, now: String) {
@@ -1337,6 +1363,13 @@ class MainActivity : Activity() {
             R.string.setup_home to Triple(getString(R.string.setup_home), "") { closeLauncherSettings(); startHomeSetup() },
             R.string.home_button to Triple(getString(R.string.home_button), toggle(homeServiceOn())) { toggleHomeButton() },
             R.string.default_launcher to Triple(getString(R.string.default_launcher), if (isDefaultHome()) getString(R.string.plume_press_change) else getString(R.string.press_to_set)) { makeDefaultHome() },
+            R.string.section_keys to Triple(getString(R.string.section_keys), "${keysSummary()}  ›") {
+                // Like the layout: behind the PIN. unlock() closes the panel after the PIN, so open it again.
+                unlock(back = { renderSettings(R.string.section_keys) }) {
+                    if (settingsScrim.visibility != View.VISIBLE) showPanel()
+                    pickKeys()
+                }
+            },
             R.string.updates to Triple(getString(R.string.updates), when {
                 updating -> getString(R.string.updating)
                 checking -> getString(R.string.checking)
@@ -1361,7 +1394,8 @@ class MainActivity : Activity() {
             Triple(R.string.section_weather, if (weather == "off") on(false) else "${rows[R.string.weather_units]!!.second} · ${rows[R.string.weather_location]!!.second}",
                 listOf(R.string.weather, R.string.weather_units, R.string.weather_location)),
             Triple(R.string.section_screensaver, rows[R.string.screensaver]!!.second, listOf(R.string.screensaver, R.string.test_screensaver, R.string.screensaver_timing)),
-            Triple(R.string.section_home, on(homeServiceOn() || isDefaultHome()), listOf(R.string.setup_home, R.string.home_button, R.string.default_launcher)),
+            Triple(R.string.section_home, "${on(homeServiceOn() || isDefaultHome())} · ${keysSummary()}",
+                listOf(R.string.setup_home, R.string.home_button, R.string.default_launcher, R.string.section_keys)),
         )
         val section = sections.firstOrNull { at in it.third }
         if (section != null) {
@@ -1372,13 +1406,6 @@ class MainActivity : Activity() {
             }
         }
         val top = sections.map { (key, value, keys) -> key to page(getString(key), "$value  ›") { renderSettings(keys[0]) } } +
-            (R.string.section_keys to page(getString(R.string.section_keys), "${keysSummary()}  ›") {
-                // Like the layout: behind the PIN. unlock() closes the panel after the PIN, so open it again.
-                unlock(back = { renderSettings(R.string.section_keys) }) {
-                    if (settingsScrim.visibility != View.VISIBLE) showPanel()
-                    pickKeys()
-                }
-            }) +
             listOf(R.string.updates, R.string.lock_layout).map { it to rows[it]!! } +
             listOfNotNull(if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) null
                 else R.string.preview_home_setup to page(getString(R.string.preview_home_setup)) { closeLauncherSettings(); previewHomeSetup() })
@@ -1397,28 +1424,37 @@ class MainActivity : Activity() {
 
     private fun page(title: String, value: String = "", action: () -> Unit) = Triple(title, value, action)
 
+    private fun toast(res: Int) = Toast.makeText(this, res, Toast.LENGTH_SHORT).show()
+
+    private fun sectionHeader(text: String) = label(text, 11f).apply {
+        alpha = 0.5f
+        isFocusable = false
+        isClickable = false
+        setPadding(dp(14), dp(12), dp(14), dp(3))
+    }
+
     private fun showPage(title: String, rows: List<Triple<String, String, () -> Unit>>, focus: Int = 0, top: View? = null,
-                         steps: List<((Int) -> Unit)?> = emptyList(), back: (() -> Unit)?) {
+                         steps: List<((Int) -> Unit)?> = emptyList(), headers: Map<Int, String> = emptyMap(),
+                         muted: Set<Int> = emptySet(), back: (() -> Unit)?) {
         pageExit?.invoke()
         pageExit = null
         pageBack = back
         findViewById<TextView>(R.id.settingsTitle).text = title
         settingsList.removeAllViews()
         top?.let { settingsList.addView(it) }
-        val first = settingsList.childCount
+        val rowViews = ArrayList<View>(rows.size)
         rows.forEachIndexed { i, (name, value, action) ->
-            settingsList.addView(settingsRow(name, value, steps.getOrNull(i), action), LinearLayout.LayoutParams(MATCH_PARENT, dp(44)).apply {
-                topMargin = dp(4)
-            })
+            headers[i]?.let { settingsList.addView(sectionHeader(it)) }
+            val row = settingsRow(name, value, steps.getOrNull(i), i in muted) { action() }
+            rowViews += row
+            settingsList.addView(row, LinearLayout.LayoutParams(MATCH_PARENT, dp(44)).apply { topMargin = dp(4) })
         }
         // Focus wraps: Up from the first row goes to the last, Down from the last to the first.
         (settingsList.parent as View).scrollTo(0, 0)
-        if (rows.isEmpty()) return // a page that's all [top], like the PIN boxes, focuses itself
-        val firstRow = settingsList.getChildAt(first)
-        val lastRow = settingsList.getChildAt(first + rows.size - 1)
-        firstRow.nextFocusUpId = lastRow.id
-        lastRow.nextFocusDownId = firstRow.id
-        settingsList.getChildAt(first + focus.coerceIn(0, rows.size - 1)).requestFocus()
+        if (rowViews.isEmpty()) return // a page that's all [top], like the PIN boxes, focuses itself
+        rowViews.first().nextFocusUpId = rowViews.last().id
+        rowViews.last().nextFocusDownId = rowViews.first().id
+        rowViews[focus.coerceIn(0, rowViews.size - 1)].requestFocus()
     }
 
     // ---------- layout lock ----------
@@ -1555,7 +1591,8 @@ class MainActivity : Activity() {
     }
 
     /** A settings row; with [step], Left and Right change its value in place, and ‹ › show that while focused. */
-    private fun settingsRow(title: String, value: String, step: ((Int) -> Unit)? = null, action: () -> Unit): View {
+    private fun settingsRow(title: String, value: String, step: ((Int) -> Unit)? = null, muted: Boolean = false,
+                            action: () -> Unit): View {
         val bg = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0)).apply { cornerRadius = dp(8).toFloat() }
         return LinearLayout(this).apply {
             id = View.generateViewId()
@@ -1563,6 +1600,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(14), 0, dp(14), 0)
             background = bg
+            if (muted) alpha = 0.45f
             isFocusable = true
             isClickable = true
             val name = label(title, 14f).apply { if (dark) setTextColor(DARK_TEXT_2) }
