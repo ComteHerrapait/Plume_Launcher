@@ -10,8 +10,8 @@ import android.view.accessibility.AccessibilityEvent
 /**
  * Google TV's launcher has to stay enabled (disabling it boot-loops the TV), so we take the Home key before
  * the system sees it and open our home directly; Google TV never flashes up. Holding Home still opens the
- * Google TV dashboard. Covering Google TV whenever it shows stays as the fallback for anything else that
- * opens it (e.g. Back out of the last app).
+ * Google TV dashboard. Covering the Google TV home screen when it shows stays as the fallback for anything
+ * else that opens it (e.g. Back out of the last app); its dashboard and setup screens stay visible.
  */
 class HomeOverride : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
@@ -104,8 +104,9 @@ class HomeOverride : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent) {
+        // Only the stock home screen: the dashboard, setup and onboarding screens must show.
         if (e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && e.packageName == GOOGLE_TV &&
-            e.className?.contains("dashboard", ignoreCase = true) != true
+            e.className?.contains("HomeActivity", ignoreCase = true) == true
         ) goHome()
     }
 
