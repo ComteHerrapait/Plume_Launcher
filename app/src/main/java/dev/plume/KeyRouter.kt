@@ -48,32 +48,32 @@ class KeyRouter(
         return true
     }
 
-    /** Keys the user changed in Plume settings (see [Remap]); any other key goes on to the system untouched. */
+    /** Keys the user changed in Plume settings (see [RemoteKeys]); any other key goes on to the system untouched. */
     private fun remap(e: KeyEvent): Boolean {
-        if (Remap.kept(e)) return false
-        val id = Remap.id(e)
-        if (id == Remap.pending) { // the key just learned: its repeats and release never reach anyone
-            if (e.action == KeyEvent.ACTION_UP) Remap.pending = null
+        if (RemoteKeys.kept(e)) return false
+        val id = RemoteKeys.id(e)
+        if (id == RemoteKeys.pending) { // the key just learned: its repeats and release never reach anyone
+            if (e.action == KeyEvent.ACTION_UP) RemoteKeys.pending = null
             return true
         }
-        Remap.learn?.let { learn ->
+        RemoteKeys.learn?.let { learn ->
             if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0) {
-                Remap.pending = id
+                RemoteKeys.pending = id
                 learn(e)
             }
             return true
         }
-        val m = Remap.all(service)[id] ?: return false
+        val m = RemoteKeys.all(service)[id] ?: return false
         // A hold needs a press. Without one, leave the whole key to its normal job: no listener, no timer.
         if (m.short.isEmpty()) { cancel(id); return false }
         // The long action runs on its timer while the key is held; a short press runs on release. This TV's
         // remote doesn't reliably send key repeats, so a timer is the only clock.
         if (e.action == KeyEvent.ACTION_DOWN) {
             if (e.repeatCount == 0) {
-                if (m.long.isNotEmpty()) hold(id) { Remap.run(service, m.long) } else cancel(id)
+                if (m.long.isNotEmpty()) hold(id) { RemoteKeys.run(service, m.long) } else cancel(id)
             }
         } else if (e.action == KeyEvent.ACTION_UP && !end(id) && !e.isCanceled) {
-            Remap.run(service, m.short)
+            RemoteKeys.run(service, m.short)
         }
         return true
     }

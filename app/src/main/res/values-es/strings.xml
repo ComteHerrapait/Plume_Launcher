@@ -264,10 +264,13 @@
     <string name="act_play_pause">Reproducir / Pausar</string>
     <string name="act_next">Siguiente</string>
     <string name="act_previous">Anterior</string>
+    <string name="act_stop">Detener</string>
     <string name="act_rewind">Rebobinar</string>
     <string name="act_forward">Avance rápido</string>
     <string name="act_back">Atrás</string>
-    <string name="act_notifications">Panel de Google TV</string>
+    <string name="act_recents">Apps recientes</string>
+    <string name="act_notifications">Notificaciones</string>
+    <string name="act_quick">Ajustes rápidos</string>
     <string name="act_power">Menú de apagado</string>
     <string name="act_settings">Ajustes de Android</string>
     <string name="act_network">Ajustes de red</string>

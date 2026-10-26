@@ -35,10 +35,8 @@ class HomeOverride : AccessibilityService() {
      * Fire OS never passes remote keys to us, so there filtering is always off.
      */
     fun applyKeyFilter() {
-        // A key with no Press action is "Not set": it stays in the list but does not need key filtering.
-        val active = Remap.all(this).values.any { it.short.isNotEmpty() }
         val filter = !fireTv(this) && (!getSharedPreferences("home", MODE_PRIVATE).getBoolean("smooth_volume", false) ||
-            active || Remap.learn != null)
+            RemoteKeys.active(this) || Remap.learn != null)
         val flag = AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
         serviceInfo = serviceInfo.apply { flags = if (filter) flags or flag else flags and flag.inv() }
     }
@@ -54,7 +52,7 @@ class HomeOverride : AccessibilityService() {
 
     override fun onKeyEvent(e: KeyEvent): Boolean = keys.onKeyEvent(e)
 
-    private val watch = HomeWatch()
+    private val watch = HomeWatchExt()
     private val jump = Runnable { goHome() }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent) {

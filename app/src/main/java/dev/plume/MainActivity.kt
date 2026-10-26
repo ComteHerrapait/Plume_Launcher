@@ -438,7 +438,7 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         unlockedUntil = 0L // leaving the home screen locks it again (onPause would also fire for permission dialogs)
-        Remap.learn = null // never keep swallowing keys for a page that's no longer on screen
+        RemoteKeys.learn = null // never keep swallowing keys for a page that's no longer on screen
         if (homeTest != 0) leftDuringTest = true
         super.onStop()
     }
@@ -1172,6 +1172,75 @@ class MainActivity : Activity() {
     // Settings > Remote keys: press a key on the remote to pick it, then choose what it does. The work is done by
     // the Home key service (see Remap), which is why the page asks for it to be on.
 
+    private fun keysSummary() = Remap.all(this).size.let { resources.getQuantityString(R.plurals.n_keys, it, it) }
+
+    private fun pickKeys(focus: Int = 0) {
+        val keys = Remap.all(this).entries.toList()
+        showPage(getString(R.string.section_keys),
+            listOf(page(getString(R.string.key_add)) { learnKey() }) + keys.map { (id, e) ->
+                page(Remap.name(this, id), Remap.describe(this, e.short.ifEmpty { e.long })) { keyPage(id) }
+            }, focus) { renderSettings(R.string.section_keys) }
+    }
+
+    /** Waits for the next key press (Back and the arrows are left alone so the page can always be left). */
+    private fun learnKey() {
+        if (HomeOverride.running == null) return Toast.makeText(this, getString(R.string.home_on_hint), Toast.LENGTH_LONG).show()
+        val hint = label(getString(R.string.key_press_prompt), 15f).apply {
+            maxLines = 5
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+        }
+        Remap.learn = { e ->
+            val id = Remap.id(e) // read now: the framework recycles the event as soon as the service returns
+            ui.post { Remap.learn = null; keyPage(id) }
+        }
+        showPage(getString(R.string.key_add), emptyList(), top = hint) { Remap.learn = null; pickKeys() }
+        pageExit = { Remap.learn = null }
+    }
+
+    private fun keyPage(id: String, focus: Int = 0) {
+        val e = Remap.all(this)[id] ?: Remap.Entry("", "")
+        showPage(Remap.name(this, id), listOf(
+            page(getString(R.string.key_short), Remap.describe(this, e.short)) { pickAction(id, false) },
+            page(getString(R.string.key_long), Remap.describe(this, e.long)) { pickAction(id, true) },
+            page(getString(R.string.key_remove)) { Remap.put(this, id, "", ""); pickKeys() },
+        ), focus) { pickKeys() }
+    }
+
+    /** Saves [action] as what [id] does on a press (or a hold) and returns to the key's page. */
+    private fun setAction(id: String, hold: Boolean, action: String) {
+        val e = Remap.all(this)[id] ?: Remap.Entry("", "")
+        if (hold) Remap.put(this, id, e.short, action) else Remap.put(this, id, action, e.long)
+        keyPage(id, if (hold) 1 else 0)
+    }
+
+    private fun pickAction(id: String, hold: Boolean) {
+        val e = Remap.all(this)[id] ?: Remap.Entry("", "")
+        val now = if (hold) e.long else e.short
+        fun row(action: String, name: String) = page(name, if (action == now) CHOSEN else "") { setAction(id, hold, action) }
+        val rows = listOf(
+            row("", getString(R.string.key_unset)),
+            row("none", getString(R.string.key_block)),
+            page(getString(R.string.key_open_app), if (now.startsWith("app:") || now.startsWith("hdmi:")) Remap.describe(this, now) else "") {
+                pickApp(id, hold, now)
+            },
+        ) + Remap.MEDIA.map { (k, v) -> row("media:$k", getString(v.second)) } +
+            Remap.SYS.map { (k, v) -> row("sys:$k", getString(v.second)) } +
+            Remap.OPEN.map { (k, v) -> row("open:$k", getString(v.second)) }
+        showPage(getString(if (hold) R.string.key_long else R.string.key_short), rows) { keyPage(id, if (hold) 1 else 0) }
+    }
+
+    private fun pickApp(id: String, hold: Boolean, now: String) {
+        // Every input counts, with or without a signal: sortedApps() has only the ones pinned to the row.
+        showPage(getString(R.string.key_open_app), (sources + sortedApps().filter { !it.pkg.startsWith(HDMI) }).map { a ->
+            val action = if (a.pkg.startsWith(HDMI)) "hdmi:" + a.pkg.removePrefix(HDMI) else "app:" + a.pkg
+            page(a.label, if (action == now) CHOSEN else "") { setAction(id, hold, action) }
+        }) { pickAction(id, hold) }
+    }
+
+    // ---------- remote keys ----------
+    // Settings > Remote keys: press a key on the remote to pick it, then choose what it does. The work is done by
+    // the Home key service (see RemoteKeys), which is why the page asks for it to be on.
+
     private val remoteKeys by lazy {
         RemoteKeysUi(object : RemoteKeysUi.Host {
             override val context: Context get() = this@MainActivity
@@ -1859,6 +1928,7 @@ class MainActivity : Activity() {
         row.requestFocus()
     }
 
+    /** A settings row; with [step], Left and Right change its value in place, and ‹ › show that while focused. */
     private val pages = ArrayList<String>() // crumb and title of the settings pages open, from the main list down
     private val spotlight by lazy { Spotlight() }
 
@@ -1945,7 +2015,6 @@ class MainActivity : Activity() {
     private class RowStyle(val icon: Int? = null, val sub: String? = null, val choices: List<Pair<String, Int?>>? = null,
                            val thumb: Pair<String, Boolean>? = null, val help: String? = null, val area: Int? = null)
 
-    /** A settings row; with [step], Left and Right change its value in place, and ‹ › show that while focused. */
     private fun settingsRow(title: String, value: String, step: ((Int) -> Unit)? = null, style: RowStyle? = null, action: () -> Unit): View {
         val bg = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0)).apply { cornerRadius = dp(8).toFloat() }
         return LinearLayout(this).apply {
@@ -2956,6 +3025,7 @@ class MainActivity : Activity() {
     private fun useGallery(folder: String?) {
         prefs.edit().putString("ss_folder", folder).apply()
         if (folder == null && !paintingsReady(this)) return downloadPaintings { useGallery(null) }
+        if (folder != null) paintingsDir(this).deleteRecursively() // not needed for photos: give the space back
         if (galleryOn()) return
         if (checkSelfPermission(WRITE_SECURE) != PackageManager.PERMISSION_GRANTED) {
             // Without the adb permission Plume can't switch it itself; Android's own list has getString(R.string.gallery).

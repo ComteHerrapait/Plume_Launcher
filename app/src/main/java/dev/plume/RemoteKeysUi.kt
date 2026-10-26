@@ -31,18 +31,18 @@ class RemoteKeysUi(private val host: Host) {
         fun backToSettings()
     }
 
-    fun summary() = Remap.all(host.context).size.let {
+    fun summary() = RemoteKeys.all(host.context).size.let {
         host.context.resources.getQuantityString(R.plurals.n_keys, it, it)
     }
 
     fun pickKeys(focus: Int = 0) {
         val c = host.context
-        val keys = Remap.all(c).entries.toList()
+        val keys = RemoteKeys.all(c).entries.toList()
         val rows = listOf(page(c.getString(R.string.key_add), "") { learnKey() }) + keys.map { (id, e) ->
             val summary = if (e.short.isEmpty() && e.long.isNotEmpty())
-                "${Remap.describe(c, e.long)} · ${c.getString(R.string.inactive)}"
-            else Remap.describe(c, e.short.ifEmpty { e.long })
-            page(Remap.name(c, id), summary) { keyPage(id) }
+                "${RemoteKeys.describe(c, e.long)} · ${c.getString(R.string.inactive)}"
+            else RemoteKeys.describe(c, e.short.ifEmpty { e.long })
+            page(RemoteKeys.name(c, id), summary) { keyPage(id) }
         }
         host.showRows(c.getString(R.string.section_keys), rows, focus) { host.backToSettings() }
     }
@@ -51,48 +51,48 @@ class RemoteKeysUi(private val host: Host) {
     private fun learnKey() {
         if (HomeOverride.running == null) return host.toastLong(R.string.home_on_hint)
         val c = host.context
-        Remap.learn = { e ->
-            val id = Remap.id(e) // read now: the framework recycles the event as soon as the service returns
-            host.post { Remap.learn = null; keyPage(id) }
+        RemoteKeys.learn = { e ->
+            val id = RemoteKeys.id(e) // read now: the framework recycles the event as soon as the service returns
+            host.post { RemoteKeys.learn = null; keyPage(id) }
         }
-        host.showContent(c.getString(R.string.key_add), host.hint(c.getString(R.string.key_press_prompt)), back = {
-            Remap.learn = null
+        host.showContent(c.getString(R.string.key_add), host.hint(c.getString(R.string.key_press_prompt_long)), back = {
+            RemoteKeys.learn = null
             pickKeys()
-        }, onExit = { Remap.learn = null })
+        }, onExit = { RemoteKeys.learn = null })
     }
 
     private fun keyPage(id: String, focus: Int = 0) {
         val c = host.context
-        val e = Remap.all(c)[id] ?: Remap.Entry("", "")
+        val e = RemoteKeys.all(c)[id] ?: RemoteKeys.EMPTY
         val pressSet = e.short.isNotEmpty()
         val holdSaved = e.long.isNotEmpty()
         val holdValue = when {
-            pressSet -> Remap.describe(c, e.long)
-            holdSaved -> "${Remap.describe(c, e.long)} · ${c.getString(R.string.inactive)}"
+            pressSet -> RemoteKeys.describe(c, e.long)
+            holdSaved -> "${RemoteKeys.describe(c, e.long)} · ${c.getString(R.string.inactive)}"
             else -> c.getString(R.string.key_hold_needs_press)
         }
-        showCustom(Remap.name(c, id), listOf(
-            Item.Row(c.getString(R.string.key_short), Remap.describe(c, e.short)) { pickAction(id, false) },
+        showCustom(RemoteKeys.name(c, id), listOf(
+            Item.Row(c.getString(R.string.key_short), RemoteKeys.describe(c, e.short)) { pickAction(id, false) },
             Item.Row(c.getString(R.string.key_long), holdValue, muted = !pressSet) {
                 if (pressSet || holdSaved) pickAction(id, true) else host.toast(R.string.key_hold_needs_press)
             },
-            Item.Row(c.getString(R.string.key_name), Remap.customName(c, id) ?: c.getString(R.string.automatic)) { renameKey(id) },
-            Item.Row(c.getString(R.string.key_remove), "") { Remap.remove(c, id); pickKeys() },
+            Item.Row(c.getString(R.string.key_name), RemoteKeys.customName(c, id) ?: c.getString(R.string.automatic)) { renameKey(id) },
+            Item.Row(c.getString(R.string.key_remove), "") { RemoteKeys.remove(c, id); pickKeys() },
         ), focus, back = { pickKeys() })
     }
 
     /** Renames a key. An empty name, or Automatic, brings back the name Android gives it ("Button 4"). */
     private fun renameKey(id: String) {
         val c = host.context
-        val custom = Remap.customName(c, id)
-        val field = host.textField(custom.orEmpty(), Remap.name(c, id)) { name ->
-            Remap.rename(c, id, name)
+        val custom = RemoteKeys.customName(c, id)
+        val field = host.textField(custom.orEmpty(), RemoteKeys.name(c, id)) { name ->
+            RemoteKeys.rename(c, id, name)
             keyPage(id, 2)
         }
         val box = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
         box.addView(field.parent as View, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         val auto = host.row(c.getString(R.string.automatic), if (custom == null) host.chosen else "") {
-            Remap.rename(c, id, "")
+            RemoteKeys.rename(c, id, "")
             keyPage(id, 2)
         }
         box.addView(auto, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(4) })
@@ -104,15 +104,15 @@ class RemoteKeysUi(private val host: Host) {
     /** Saves [action] as what [id] does on a press (or a hold) and returns to the key's page. */
     private fun setAction(id: String, hold: Boolean, action: String) {
         val c = host.context
-        val e = Remap.all(c)[id] ?: Remap.Entry("", "")
+        val e = RemoteKeys.all(c)[id] ?: RemoteKeys.EMPTY
         if (hold && e.short.isEmpty() && action.isNotEmpty()) return host.toast(R.string.key_hold_needs_press)
-        if (hold) Remap.put(c, id, e.short, action) else Remap.put(c, id, action, e.long)
-        if (Remap.all(c).containsKey(id)) keyPage(id, if (hold) 1 else 0) else pickKeys()
+        if (hold) RemoteKeys.put(c, id, e.short, action) else RemoteKeys.put(c, id, action, e.long)
+        if (RemoteKeys.all(c).containsKey(id)) keyPage(id, if (hold) 1 else 0) else pickKeys()
     }
 
     private fun pickAction(id: String, hold: Boolean) {
         val c = host.context
-        val e = Remap.all(c)[id] ?: Remap.Entry("", "")
+        val e = RemoteKeys.all(c)[id] ?: RemoteKeys.EMPTY
         if (hold && e.short.isEmpty()) {
             host.showRows(c.getString(R.string.key_long), listOf(
                 page(c.getString(R.string.key_unset), if (e.long.isEmpty()) host.chosen else "") { setAction(id, true, "") },
@@ -127,24 +127,24 @@ class RemoteKeysUi(private val host: Host) {
         }
 
         header(R.string.group_apps)
-        items += Item.Row(c.getString(R.string.key_open_app), if (now.startsWith("app:") || now.startsWith("hdmi:")) Remap.describe(c, now) else "") {
+        items += Item.Row(c.getString(R.string.key_open_app), if (now.startsWith("app:") || now.startsWith("hdmi:")) RemoteKeys.describe(c, now) else "") {
             pickApp(id, hold, now)
         }
 
         header(R.string.group_system)
-        val panel = Remap.panelAvailable(c)
-        Remap.SYS.forEach { (k, v) ->
+        val panel = RemoteKeys.panelAvailable(c)
+        RemoteKeys.SYS.forEach { (k, v) ->
             actionRow("sys:$k", v.second)
             if (k == "notifications" && panel) actionRow("panel:home", R.string.act_home_panel)
         }
-        Remap.OPEN.forEach { (k, v) -> if (Remap.available(c, "open:$k")) actionRow("open:$k", v.second) }
+        RemoteKeys.OPEN.forEach { (k, v) -> if (RemoteKeys.available(c, "open:$k")) actionRow("open:$k", v.second) }
 
         header(R.string.group_media)
-        Remap.MEDIA.forEach { (k, v) -> actionRow("media:$k", v.second) }
+        RemoteKeys.MEDIA.forEach { (k, v) -> actionRow("media:$k", v.second) }
 
         if (Build.VERSION.SDK_INT >= 33) {
             header(R.string.group_nav)
-            Remap.NAV.forEach { (k, v) -> actionRow("nav:$k", v.second) }
+            RemoteKeys.NAV.forEach { (k, v) -> actionRow("nav:$k", v.second) }
         }
 
         header(R.string.group_other)

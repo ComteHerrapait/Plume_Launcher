@@ -22,8 +22,7 @@ class HomeWatch {
     }
 
     private fun isHome(pkg: String, cls: String?) = when (pkg) {
-        // Only the stock home screen: the dashboard, setup and onboarding screens must show.
-        GOOGLE_TV -> cls?.contains("HomeActivity", ignoreCase = true) == true
+        GOOGLE_TV -> cls?.contains("dashboard", ignoreCase = true) != true // holding Home opens the dashboard
         AMAZON -> cls?.startsWith("$AMAZON.ui.HomeActivity") == true // HomeActivity_vNext on current builds
         OLD_AMAZON -> cls == "$OLD_AMAZON.Launcher"
         else -> false

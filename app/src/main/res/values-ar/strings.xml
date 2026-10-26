@@ -193,8 +193,6 @@
     <string name="section_appearance">المظهر</string>
     <string name="section_app_row">صف التطبيقات</string>
     <string name="section_screensaver">شاشة التوقف</string>
-    <string name="section_remote_home">زر الرئيسية والمفاتيح</string>
-    <string name="inactive">غير نشط</string>
     <string name="bing_daily">صورة اليوم من Bing</string>
     <string name="sources">المصادر</string>
     <string name="no_signal">لا توجد إشارة</string>

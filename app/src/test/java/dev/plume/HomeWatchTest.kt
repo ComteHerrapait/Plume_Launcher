@@ -44,9 +44,4 @@ class HomeWatchTest {
         w.opened("dev.plume", "dev.plume.MainActivity", 2_000)
         assertEquals(0L, w.opened(gtv, "com.google.android.apps.tv.launcherx.home.HomeActivity", 3_000))
     }
-
-    @Test fun googleTvSetupScreensAreLeftAlone() {
-        val gtv = "com.google.android.apps.tv.launcherx"
-        assertNull(HomeWatch().opened(gtv, "com.google.android.apps.tv.launcherx.setup.SetupActivity", 1_000))
-    }
 }

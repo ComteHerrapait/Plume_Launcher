@@ -186,8 +186,6 @@
     <string name="section_appearance">Görünüm</string>
     <string name="section_app_row">Uygulama satırı</string>
     <string name="section_screensaver">Ekran Koruyucu</string>
-    <string name="section_remote_home">Ana Ekran tuşu ve tuşlar</string>
-    <string name="inactive">Etkin değil</string>
     <string name="sources">Kaynaklar</string>
     <string name="no_signal">Sinyal yok</string>
     <string name="in_row">Satırda</string>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group_apps">Applis et entrées</string>
+    <string name="group_system">Système et réglages</string>
+    <string name="group_media">Média</string>
+    <string name="group_nav">Navigation</string>
+    <string name="group_other">Autre</string>
+
+    <string name="key_press_prompt_long">Appuyez sur la touche à changer sur votre télécommande. Retour, OK, les flèches et certaines touches du téléviseur ne peuvent pas être changés. Une touche réglée ici ne fait plus son travail habituel.</string>
+    <string name="key_hold_needs_press">Choisissez d\'abord une action sur appui</string>
+    <string name="inactive">Inactif</string>
+    <string name="key_name">Nom</string>
+    <string name="key_name_hint">Nom de la touche</string>
+
+    <string name="act_dashboard">Tableau de bord Google TV</string>
+    <string name="act_assistant">Assistant Google</string>
+    <string name="act_home_panel">Panneau Google Home</string>
+    <string name="act_up">Monter</string>
+    <string name="act_down">Descendre</string>
+    <string name="act_left">Gauche</string>
+    <string name="act_right">Droite</string>
+    <string name="act_select">Sélectionner</string>
+
+    <string name="action_unavailable">Non disponible sur ce téléviseur</string>
+    <string name="action_failed">Impossible de faire cela</string>
+</resources>

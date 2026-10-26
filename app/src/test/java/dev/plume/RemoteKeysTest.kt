@@ -8,8 +8,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class RemapTest {
-    /** Only what Remap uses: one string in, one string out. */
+class RemoteKeysTest {
+    /** Only what RemoteKeys uses: one string in, one string out. */
     private class FakePrefs : SharedPreferences {
         val strings = HashMap<String, String>()
         override fun getString(key: String?, defValue: String?) = strings[key] ?: defValue
@@ -36,12 +36,12 @@ class RemapTest {
         override fun unregisterOnSharedPreferenceChangeListener(l: SharedPreferences.OnSharedPreferenceChangeListener?) {}
     }
 
-    @Before fun fresh() = Remap.reset() // Remap keeps its keys in memory between calls
+    @Before fun fresh() = RemoteKeys.reset() // Remap keeps its keys in memory between calls
 
     @Test fun putThenAllGivesBackTheSameEntries() {
         val p = FakePrefs()
-        Remap.put(p, "k183", "app:com.netflix.ninja", "sys:back")
-        Remap.put(p, "s4001", "media:playpause", "")
+        RemoteKeys.put(p, "k183", "app:com.netflix.ninja", "sys:back")
+        RemoteKeys.put(p, "s4001", "media:playpause", "")
         fun check(read: Map<String, Remap.Entry>) {
             assertEquals(listOf("k183", "s4001"), read.keys.toList())
             assertEquals("app:com.netflix.ninja", read["k183"]!!.short)
@@ -49,23 +49,23 @@ class RemapTest {
             assertEquals("media:playpause", read["s4001"]!!.short)
             assertEquals("", read["s4001"]!!.long)
         }
-        check(Remap.all(p)) // from memory
-        Remap.reset()
-        check(Remap.all(p)) // from the saved string
+        check(RemoteKeys.all(p)) // from memory
+        RemoteKeys.reset()
+        check(RemoteKeys.all(p)) // from the saved string
     }
 
     @Test fun anUnnamedKeyWithNoActionsStaysNotSet() {
         val p = FakePrefs()
-        Remap.put(p, "k183", "app:com.netflix.ninja", "")
-        Remap.put(p, "k184", "none", "")
-        Remap.put(p, "k183", "", "")
-        val keys = Remap.all(p)
+        RemoteKeys.put(p, "k183", "app:com.netflix.ninja", "")
+        RemoteKeys.put(p, "k184", "none", "")
+        RemoteKeys.put(p, "k183", "", "")
+        val keys = RemoteKeys.all(p)
         assertEquals(listOf("k183", "k184"), keys.keys.toList())
         assertEquals("", keys["k183"]!!.short)
         assertEquals("", keys["k183"]!!.long)
         assertEquals("none", keys["k184"]!!.short)
-        Remap.reset()
-        val saved = Remap.all(p)
+        RemoteKeys.reset()
+        val saved = RemoteKeys.all(p)
         assertEquals(listOf("k183", "k184"), saved.keys.toList())
         assertEquals("", saved["k183"]!!.short)
         assertEquals("", saved["k183"]!!.long)
@@ -74,89 +74,100 @@ class RemapTest {
 
     @Test fun aHoldSurvivesClearingPressAndTheKeyStaysWhenCleared() {
         val p = FakePrefs()
-        Remap.put(p, "k188", "app:com.netflix.ninja", "sys:back")
-        Remap.put(p, "k188", "", "sys:back") // clearing Press keeps the saved Hold
-        val kept = Remap.all(p)["k188"]!!
+        RemoteKeys.put(p, "k188", "app:com.netflix.ninja", "sys:back")
+        RemoteKeys.put(p, "k188", "", "sys:back") // clearing Press keeps the saved Hold
+        val kept = RemoteKeys.all(p)["k188"]!!
         assertEquals("", kept.short)
         assertEquals("sys:back", kept.long)
-        Remap.put(p, "k188", "", "") // clearing the Hold leaves an empty key
-        val empty = Remap.all(p)["k188"]!!
+        RemoteKeys.put(p, "k188", "", "") // clearing the Hold leaves an empty key
+        val empty = RemoteKeys.all(p)["k188"]!!
         assertEquals("", empty.short)
         assertEquals("", empty.long)
-        Remap.reset()
-        val saved = Remap.all(p)["k188"]!!
+        RemoteKeys.reset()
+        val saved = RemoteKeys.all(p)["k188"]!!
         assertEquals("", saved.short)
         assertEquals("", saved.long)
+    }
+
+    @Test fun anOldNotSetKeyMovesToTheDisabledList() {
+        val p = FakePrefs()
+        // Older fork builds saved an empty entry in upstream's keymap.
+        p.edit().putString("keymap", "k188\t\t").apply()
+        Remap.reset()
+        val keys = RemoteKeys.all(p)
+        assertEquals("", keys["k188"]!!.short)
+        assertEquals("", keys["k188"]!!.long)
+        assertEquals("k188", p.getString("keymap_disabled", ""))
     }
 
     @Test fun clearingAnAbsentKeyDoesNothing() {
         val p = FakePrefs()
-        Remap.put(p, "k184", "none", "")
-        Remap.put(p, "k188", "", "")
-        assertEquals(listOf("k184"), Remap.all(p).keys.toList())
-        Remap.reset()
-        assertEquals(listOf("k184"), Remap.all(p).keys.toList())
+        RemoteKeys.put(p, "k184", "none", "")
+        RemoteKeys.put(p, "k188", "", "")
+        assertEquals(listOf("k184"), RemoteKeys.all(p).keys.toList())
+        RemoteKeys.reset()
+        assertEquals(listOf("k184"), RemoteKeys.all(p).keys.toList())
     }
 
     @Test fun aCustomNameOverridesTheAutomaticOneAndCanBeCleared() {
         val p = FakePrefs()
-        Remap.rename(p, "k188", "  UP replacement  ")
-        assertEquals("UP replacement", Remap.customName(p, "k188"))
-        Remap.rename(p, "k188", "   ")
-        assertEquals(null, Remap.customName(p, "k188"))
+        RemoteKeys.rename(p, "k188", "  UP replacement  ")
+        assertEquals("UP replacement", RemoteKeys.customName(p, "k188"))
+        RemoteKeys.rename(p, "k188", "   ")
+        assertEquals(null, RemoteKeys.customName(p, "k188"))
     }
 
     @Test fun removingAKeyForgetsItsName() {
         val p = FakePrefs()
-        Remap.put(p, "k188", "nav:up", "")
-        Remap.rename(p, "k188", "UP replacement")
-        Remap.remove(p, "k188")
-        assertEquals(null, Remap.customName(p, "k188"))
-        assertTrue(Remap.all(p).isEmpty())
+        RemoteKeys.put(p, "k188", "nav:up", "")
+        RemoteKeys.rename(p, "k188", "UP replacement")
+        RemoteKeys.remove(p, "k188")
+        assertEquals(null, RemoteKeys.customName(p, "k188"))
+        assertTrue(RemoteKeys.all(p).isEmpty())
     }
 
     @Test fun aNamedKeySurvivesClearingBothActions() {
         val p = FakePrefs()
-        Remap.put(p, "k188", "app:com.netflix.ninja", "sys:back")
-        Remap.rename(p, "k188", "My button")
-        Remap.put(p, "k188", "", "sys:back") // clear Press
-        Remap.put(p, "k188", "", "") // clear Hold
-        val kept = Remap.all(p)["k188"]!!
+        RemoteKeys.put(p, "k188", "app:com.netflix.ninja", "sys:back")
+        RemoteKeys.rename(p, "k188", "My button")
+        RemoteKeys.put(p, "k188", "", "sys:back") // clear Press
+        RemoteKeys.put(p, "k188", "", "") // clear Hold
+        val kept = RemoteKeys.all(p)["k188"]!!
         assertEquals("", kept.short)
         assertEquals("", kept.long)
-        assertEquals("My button", Remap.customName(p, "k188"))
-        Remap.reset()
-        val saved = Remap.all(p)["k188"]!!
+        assertEquals("My button", RemoteKeys.customName(p, "k188"))
+        RemoteKeys.reset()
+        val saved = RemoteKeys.all(p)["k188"]!!
         assertEquals("", saved.short)
         assertEquals("", saved.long)
-        assertEquals("My button", Remap.customName(p, "k188"))
+        assertEquals("My button", RemoteKeys.customName(p, "k188"))
     }
 
     @Test fun aCustomNameIsCapped() {
         val p = FakePrefs()
-        Remap.rename(p, "k188", "x".repeat(40))
-        assertEquals(24, Remap.customName(p, "k188")!!.length)
+        RemoteKeys.rename(p, "k188", "x".repeat(40))
+        assertEquals(24, RemoteKeys.customName(p, "k188")!!.length)
     }
 
     @Test fun actionsThatDoNotWorkOnTvAreNotOffered() {
-        assertFalse("recents" in Remap.SYS)
-        assertFalse("quick" in Remap.SYS)
-        assertFalse("stop" in Remap.MEDIA)
+        assertFalse("recents" in RemoteKeys.SYS)
+        assertFalse("quick" in RemoteKeys.SYS)
+        assertFalse("stop" in RemoteKeys.MEDIA)
     }
 
     @Test fun idFallsBackToTheScanCode() {
-        assertEquals("k183", Remap.id(KeyEvent.KEYCODE_PROG_RED, 398))
-        assertEquals("s398", Remap.id(KeyEvent.KEYCODE_UNKNOWN, 398))
+        assertEquals("k183", RemoteKeys.id(KeyEvent.KEYCODE_PROG_RED, 398))
+        assertEquals("s398", RemoteKeys.id(KeyEvent.KEYCODE_UNKNOWN, 398))
     }
 
     @Test fun keptRefusesKeysThatMustNotChange() {
-        assertTrue(Remap.kept(KeyEvent.KEYCODE_BACK, 158))
-        assertTrue(Remap.kept(KeyEvent.KEYCODE_POWER, 116))
-        assertTrue(Remap.kept(KeyEvent.KEYCODE_VOLUME_UP, 115))
-        assertTrue(Remap.kept(KeyEvent.KEYCODE_VOLUME_DOWN, 114))
-        assertFalse(Remap.kept(KeyEvent.KEYCODE_VOLUME_MUTE, 113)) // mute can be given a new job
-        assertTrue(Remap.kept(KeyEvent.KEYCODE_UNKNOWN, 0)) // no code at all: every such key would share one identity
-        assertFalse(Remap.kept(KeyEvent.KEYCODE_UNKNOWN, 398)) // a scan code is enough to tell it apart
-        assertFalse(Remap.kept(KeyEvent.KEYCODE_PROG_RED, 398))
+        assertTrue(RemoteKeys.kept(KeyEvent.KEYCODE_BACK, 158))
+        assertTrue(RemoteKeys.kept(KeyEvent.KEYCODE_POWER, 116))
+        assertTrue(RemoteKeys.kept(KeyEvent.KEYCODE_VOLUME_UP, 115))
+        assertTrue(RemoteKeys.kept(KeyEvent.KEYCODE_VOLUME_DOWN, 114))
+        assertFalse(RemoteKeys.kept(KeyEvent.KEYCODE_VOLUME_MUTE, 113)) // mute can be given a new job
+        assertTrue(RemoteKeys.kept(KeyEvent.KEYCODE_UNKNOWN, 0)) // no code at all: every such key would share one identity
+        assertFalse(RemoteKeys.kept(KeyEvent.KEYCODE_UNKNOWN, 398)) // a scan code is enough to tell it apart
+        assertFalse(RemoteKeys.kept(KeyEvent.KEYCODE_PROG_RED, 398))
     }
 }
