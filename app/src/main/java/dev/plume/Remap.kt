@@ -1,6 +1,7 @@
 package dev.plume
 
 import android.accessibilityservice.AccessibilityService
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -23,8 +24,12 @@ import android.widget.Toast
 object Remap {
     class Entry(val short: String, val long: String)
 
-    /** Set while the settings page waits for a key to change. */
+    /** Set while the settings page waits for a key to change; the service must see keys meanwhile. */
     var learn: ((KeyEvent) -> Unit)? = null
+        set(value) {
+            field = value
+            HomeOverride.running?.applyKeyFilter()
+        }
 
     /** The key whose press was just taken to be learned: its repeats and its release are swallowed too. */
     var pending: String? = null
@@ -105,7 +110,10 @@ object Remap {
     }
 
     /** Saves a key's actions. Clearing both keeps the key as "Not set"; only [remove] deletes it. */
-    fun put(c: Context, id: String, short: String, long: String) = put(store(c), id, short, long)
+    fun put(c: Context, id: String, short: String, long: String) {
+        put(store(c), id, short, long)
+        HomeOverride.running?.applyKeyFilter()
+    }
 
     internal fun put(p: SharedPreferences, id: String, short: String, long: String) {
         val m = all(p)
@@ -127,6 +135,7 @@ object Remap {
         p.edit().remove("keyname_$id")
             .putString("keymap", m.entries.joinToString("\n") { "${it.key}\t${it.value.short}\t${it.value.long}" })
             .apply()
+        HomeOverride.running?.applyKeyFilter()
     }
 
     /** Whether this action can run on this device now. Media and the power menu stay best-effort. */
@@ -153,6 +162,30 @@ object Remap {
     private fun launchIntent(c: Context, pkg: String) =
         c.packageManager.getLeanbackLaunchIntentForPackage(pkg) ?: c.packageManager.getLaunchIntentForPackage(pkg)
 
+    private val KAMINO = ComponentName("com.amazon.tv.inputpreference.service", "com.amazon.tv.inputpreference.service.KaminoInputSwitchService")
+
+    /** The hardware number at the end of a TV input id ("…/HW2"): Fire OS's input switch takes it as the port, HW2 being HDMI 1. */
+    internal fun hardwareNumber(id: String) = Regex("/HW(\\d+)$").find(id)?.groupValues?.get(1)?.toInt()
+
+    /**
+     * Opens an HDMI input, for the tiles and for keys alike. Fire OS hands the standard passthrough request to Amazon's
+     * Live TV app, which opens the wrong screen (#91), so there the input goes through Amazon's own input switch, as its
+     * home screen does. Some Fire OS builds keep that switch to Amazon's apps: then a toast says how to switch by hand.
+     */
+    fun openInput(c: Context, id: String) {
+        if (!c.packageManager.hasSystemFeature("amazon.hardware.fire_tv")) {
+            c.startActivity(Intent(Intent.ACTION_VIEW, TvContract.buildChannelUriForPassthroughInput(id)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        }
+        val port = hardwareNumber(id)
+        val started = port != null && try {
+            c.startService(Intent().setComponent(KAMINO).putExtra("inputType", port)) != null
+        } catch (e: Exception) {
+            false // not exported to other apps on this build, or Android refused a start from the background
+        }
+        if (!started) Toast.makeText(c, R.string.fire_os_no_input, Toast.LENGTH_LONG).show()
+    }
+
     fun run(s: AccessibilityService, action: String) {
         if (action == "none") return
         if (!available(s, action)) return showToast(s, R.string.action_unavailable)
@@ -161,8 +194,7 @@ object Remap {
             when (action.substringBefore(':')) {
                 "app" -> launchIntent(s, arg)?.let { s.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                     ?: showToast(s, R.string.action_unavailable)
-                "hdmi" -> s.startActivity(Intent(Intent.ACTION_VIEW, TvContract.buildChannelUriForPassthroughInput(arg))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                "hdmi" -> openInput(s, arg)
                 "media" -> MEDIA[arg]?.let { (code, _) ->
                     val audio = s.getSystemService(Context.AUDIO_SERVICE) as AudioManager
                     audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))

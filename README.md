@@ -31,7 +31,7 @@ Plume replaces the cluttered stock home screen with the two things you actually 
 - **Clean apps row.** Monochrome logos (or the same logos in brand colour, or each app's own banner) in a single row, with names on focus, always or never. Rearrange it by holding OK, sort by most used, or hide apps you don't use (they stay in All apps). An optional PIN locks the layout so small hands can't rearrange it.
 - **Sources list.** The Sources icon in the top bar opens the list of the TV inputs. A console or set-top box that names itself over HDMI-CEC (for example "PlayStation 5") shows with its logo, and selecting it switches the TV to that input. A port with no signal says so. Hold OK on an input to put it in the apps row, and again to take it out.
 - **Remote keys.** Change what a button on your remote does, for example the TV, Netflix or Settings button. A key can do one thing on a press and another when you hold it. See [Remote keys](#remote-keys).
-- **Light, dark or automatic theme**, each with its own wallpaper. Add your own photos from your phone by scanning a QR code, or show a folder of photos from the TV or a USB drive that changes on a timer.
+- **Light, dark or automatic theme**, each with its own wallpaper. Auto follows sunrise and sunset where you are (from 7:00 to 19:00 until Plume has a location; it keeps that location if you turn the weather off later). Add your own photos from your phone by scanning a QR code, or show a folder of photos from the TV or a USB drive that changes on a timer.
 - **Optional Gallery screensaver.** Public-domain landscape paintings in 16:9, downloaded only if you choose it, or a folder of your own photos.
 - **Optional weather** under the clock.
 - **Updates itself.** Plume checks GitHub once a day and installs new versions from its settings (from 1.2 on). The first update asks you to allow installs from Plume.
@@ -63,7 +63,7 @@ Measured on a Hisense Google TV (Android 12, 1.8 GB RAM):
 
 ### First-run setup
 
-Plume's settings panel includes two setup rows:
+Until one of them is on, Plume settings shows a **Finish setup** card at the top. Both rows are also under **Plume settings → Remote & Home button**:
 
 | Setting | What to do |
 |---|---|
@@ -73,7 +73,10 @@ Plume's settings panel includes two setup rows:
 Allow the **TV listings** permission when asked; Continue Watching needs it.
 
 > [!NOTE]
-> Android shows the same generic warning for every accessibility service. Plume's service listens for the Home key, for the keys you set under **Remote keys**, the system launcher and the screensaver. It uses window package and class names to detect the launcher and screensaver; it does not read screen text.
+> **Holding Volume moves one step?** Many TVs act on the volume keys before any accessibility service sees them, so with the Home button on, a held Volume key changes the volume only once. Turn on **Plume settings → Remote & Home button → Smooth volume** to get the normal hold back. In exchange, Home shows Google TV for about a second before Plume opens, and Smooth volume stays off while any **Remote keys** are set.
+
+> [!NOTE]
+> Android shows the same generic warning for every accessibility service. Plume's service listens for the Home key, for the keys you set under **Remote keys**, the system launcher and the screensaver. It uses window package and class names to detect the launcher and screensaver; it cannot read screen content.
 
 > [!TIP]
 > **Android 13 and newer:** Android blocks sideloaded apps from Accessibility at first. Open **Settings → Apps → Plume**, choose **Allow restricted settings** from the menu, then turn the service on.
@@ -109,22 +112,22 @@ Android 13 and newer grey out the Accessibility switch for apps installed outsid
 
 | Action | How |
 |---|---|
-| Rearrange apps | Hold **OK** on an app, or use **Settings → Edit apps row** |
+| Rearrange apps | Hold **OK** on an app, or use **Plume settings → Apps row → Rearrange apps** |
 | Hide a Continue Watching item | Hold **OK** on its card, then **Remove from Continue Watching** |
 | Remove an app from the row | Hold **OK** on it, then **Remove from row** (it stays in *All apps*) |
-| Choose which apps feed Continue Watching | **Settings → Continue Watching apps** |
+| Choose which apps feed Continue Watching | **Plume settings → Shows row → From apps** |
 | Pin an app from *All apps* to the front | Open **All apps**, hold **OK** on the app (this also unhides it) |
-| Hide apps from the row | **Settings → Apps in row** |
-| Show app names always, on focus or never | **Settings → App names** |
-| Switch between monochrome icons, colour icons and app banners | **Settings → Icon style** |
-| Update Plume | **Settings → Updates** |
-| Change what a remote key does | **Plume settings → Home button & remote keys → Remote keys** |
-| Lock the layout with a PIN | **Settings → Lock layout** |
+| Hide apps from the row | **Plume settings → Apps row → Choose apps** |
+| Show app names always, on focus or never | **Plume settings → Apps row → App names** |
+| Switch between monochrome icons, colour icons and app banners | **Plume settings → Apps row → Icon style** |
+| Update Plume | **Plume settings → Updates** |
+| Change what a remote key does | **Plume settings → Remote & Home button → Remote keys** |
+| Lock the layout with a PIN | **Plume settings → Lock layout** |
 | Open the Google TV dashboard | Hold the **Home** button |
 
 ### Remote keys
 
-**Plume settings → Home button & remote keys → Remote keys → Add a key**, then press the key on your remote. Plume detects it. For each key, choose what a **Press** does and what a **Hold** does:
+**Plume settings → Remote & Home button → Remote keys → Add a key**, then press the key on your remote. Plume detects it. For each key, choose what a **Press** does and what a **Hold** does:
 
 - open an app or an HDMI input (**Open an app or input…**)
 - a media key: Play / Pause, Next, Previous, Rewind or Fast-forward
@@ -135,7 +138,7 @@ Android 13 and newer grey out the Accessibility switch for apps installed outsid
 
 A key needs a Press action before it can have a Hold action. Clearing Press returns the whole key to its normal job; the Hold stays saved but is greyed out and inactive until you set Press again.
 
-Back, OK, the arrows, Home, Power and volume up/down can't be changed, so the remote can't be locked out and keeps its volume. Mute can be changed. The Google Assistant button is handled by the TV before Plume sees it, so it can't be remapped.
+Back, OK, the arrows, Home, Power and volume up/down can't be changed, so the remote can't be locked out. Mute can be changed. The Google Assistant button is handled by the TV before Plume sees it, so it can't be remapped. While any key is set, **Smooth volume** is off.
 
 A key you set stops doing its usual job. **Remove this key** gives it back. The keys work through the Home button service, so **Plume: Home button** must be on in Accessibility settings.
 
@@ -143,7 +146,7 @@ The **Google Home panel** action opens the Google TV smart-home panel. Add your 
 
 ### Custom wallpapers
 
-Open **Light mode wallpaper** or **Dark mode wallpaper** in Plume settings and choose **Add from phone…**. Scan the QR code with your phone (it must be on the same Wi-Fi as the TV), pick a photo and upload it. It becomes the wallpaper straight away. The TV turns it upright, crops it to the screen around its centre and saves a small copy. The upload page only works while that screen is open. **Remove a photo…** in the same list deletes one.
+Open **Plume settings → Wallpaper & theme → Light wallpaper** or **Dark wallpaper** and choose **Add from phone…**. Scan the QR code with your phone (it must be on the same Wi-Fi as the TV), pick a photo and upload it. It becomes the wallpaper straight away. The TV turns it upright, crops it to the screen around its centre and saves a small copy. The upload page only works while that screen is open. **Remove a photo…** in the same list deletes one.
 
 You can also copy `.jpg`, `.png` or `.webp` files to `Android/data/dev.plume/files/wallpapers/` yourself:
 
@@ -151,21 +154,21 @@ You can also copy `.jpg`, `.png` or `.webp` files to `Android/data/dev.plume/fil
 adb push my-wallpaper.jpg /sdcard/Android/data/dev.plume/files/wallpapers/
 ```
 
-A gentle fade is added automatically so the rows stay readable (**Settings → Photo fade** turns it off).
+A gentle fade is added automatically so the rows stay readable (**Plume settings → Wallpaper & theme → Photo fade** turns it off).
 
 ### Photo folders
 
-Choose **Choose a folder on this TV…** in the wallpaper list to use a whole folder of photos, from the TV's storage or a USB drive. Plume asks for access to your photos the first time. The photos take turns in shuffled order; **Settings → Folder photo changes** sets how often, from every minute to once a day. The screensaver can show a folder too: **Settings → Screensaver → Your photos**.
+Choose **Choose a folder on this TV…** in the wallpaper list to use a whole folder of photos, from the TV's storage or a USB drive. Plume asks for access to your photos the first time. The photos take turns in shuffled order; **Plume settings → Wallpaper & theme → Change photo every** sets how often, from every minute to once a day. The screensaver can show a folder too: **Plume settings → Screensaver → Screensaver → Your photos**.
 
 ### Lock layout
 
-**Settings → Lock layout** sets a 4-digit PIN. While it's on, Plume settings and anything that changes the home screen (moving, removing or pinning apps, hiding shows) ask for the PIN first; opening apps works as usual. One PIN unlocks changes for five minutes, until you leave the home screen. Use the arrows or the remote's number keys to enter it.
+**Plume settings → Lock layout** sets a 4-digit PIN. While it's on, Plume settings and anything that changes the home screen (moving, removing or pinning apps, hiding shows) ask for the PIN first; opening apps works as usual. One PIN unlocks changes for five minutes, until you leave the home screen. Use the arrows or the remote's number keys to enter it.
 
 The lock keeps the layout safe, it isn't parental control: apps can still be opened by voice search or from Android settings. Forgot the PIN? **Android Settings → Apps → Plume → Clear data** removes it, along with your layout and settings.
 
 ### Gallery screensaver
 
-Select **Settings → Screensaver** to switch to Gallery. Plume downloads the paintings (4.7 MB) from this repository's releases and stores them privately. Switching back to another screensaver deletes them again, so they only take space while you use them.
+Select **Plume settings → Screensaver → Screensaver** to switch to Gallery. Plume downloads the paintings (4.7 MB) from this repository's releases and stores them privately. Switching back to another screensaver deletes them again, so they only take space while you use them.
 
 ## Privacy
 
@@ -174,7 +177,7 @@ Plume has no analytics, no ads and no account. It only connects to the internet 
 - check this repository's GitHub releases for a new version, once a day, and download it when you choose to update
 - download the Gallery paintings from this repository, **only if you choose that screensaver**
 - get the Bing picture of the day (about 300 KB), **only if you choose it as your wallpaper**. Plume sends a request to [bing.com](https://www.bing.com) when the home screen opens: once a day, or once an hour until the picture has changed that day, because Bing changes it at a set time for each country. Bing sees the TV's IP address and its language and country, which Plume sends to get the picture for your country. Plume keeps one picture and deletes it when you choose another wallpaper.
-- fetch the weather, **only if you turn it on**. It looks up your approximate location from your IP address via [ipwho.is](https://ipwho.is), then gets the forecast from [Open-Meteo](https://open-meteo.com).
+- fetch the weather, **only if you turn it on**. It looks up your approximate location from your IP address via [ipwho.is](https://ipwho.is), then gets the forecast from [Open-Meteo](https://open-meteo.com). The Auto theme uses the same location to work out sunrise and sunset on the TV, with no extra request. Plume keeps the location on the TV after you turn the weather off, so Auto still follows the sun; clearing Plume's data removes it.
 
 **Add from phone…** runs a small upload page on the TV itself, reachable only on your home network and only while that screen is open. Photos go straight from your phone to the TV and nowhere else.
 
@@ -183,13 +186,13 @@ Plume has no analytics, no ads and no account. It only connects to the internet 
 <details>
 <summary><b>The Home button still opens the old home screen</b></summary>
 
-Check that **Settings → Home button & remote keys** shows **On**. If the app was force-stopped, Android turns its accessibility service off; open Plume once (or grant the optional adb permission above) to restore it.
+Check that **Plume settings → Remote & Home button → Home button** shows **On**. If the app was force-stopped, Android turns its accessibility service off; open Plume once (or grant the optional adb permission above) to restore it.
 </details>
 
 <details>
 <summary><b>Continue Watching is empty</b></summary>
 
-Make sure the TV listings permission is allowed (**Settings → Apps → Plume → Permissions**), and that the app you watch publishes to Android TV's Watch Next list. Check **Settings → Continue Watching apps** in Plume too.
+Make sure the TV listings permission is allowed (**Settings → Apps → Plume → Permissions**), and that the app you watch publishes to Android TV's Watch Next list. Check **Plume settings → Shows row → From apps** in Plume too.
 </details>
 
 <details>
@@ -221,7 +224,7 @@ Bug reports, design ideas, translations and pull requests are welcome. Plume sta
   - Martin Johnson Heade: *Thunder Storm on Narragansett Bay*
 - **Wallpapers:** "Canada" by Thomas Curryer, via [Unsplash](https://unsplash.com/@tawc20) (CC0)
 - **App logos:** [Simple Icons](https://simpleicons.org) (CC0). All trademarks belong to their respective owners.
-- **HDMI input icons:** [Material Symbols](https://fonts.google.com/icons) by Google (Apache 2.0)
+- **HDMI input and settings icons:** [Material Symbols](https://fonts.google.com/icons) by Google (Apache 2.0)
 
 ## License
 

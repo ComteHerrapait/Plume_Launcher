@@ -1,7 +1,7 @@
 # Changelog
 
 Plume shows the section for its own version in **Plume settings → Updates** after an update.
-After an update, a card on the home screen shows the first 3 entries. Put the 3 most interesting changes first.
+After an update, a card on the home screen shows the first 4 entries. Put the 4 most interesting changes first.
 The build stops if `versionName` has no section here.
 
 Write every entry in ASD-STE100 Simplified Technical English:
@@ -16,16 +16,34 @@ Put changes that are not released under `## Unreleased`. Rename that heading to 
 
 ## Unreleased
 
-- **Hide the bottom row.** Select **Plume settings → Bottom row → Show row**. Choose **On Down** to show only the apps and the wallpaper. Press Down to slide the row in, and Up to hide it. Choose **Never** to remove the row. **App row when hidden** keeps the apps in place or moves them down.
-- **Text that fits the wallpaper.** The clock, the date, the weather and the Continue watching text change to white or dark to match the wallpaper behind them. You can read them on a bright photo and on a dark photo.
-- **Less memory.** Plume keeps the wallpaper and the app icons once instead of twice. On a test TV, it uses about 11 MB less.
-- A new **Sources** icon in the top bar opens the list of the TV inputs. Select an input to switch to it. A device that names itself over HDMI, like a PS5, shows with its logo. A port with no signal says so. Hold OK on an input to put it in the row or take it out. Inputs that were in the row before the update stay there.
-- **Remote keys.** Change what a button on your remote does. Select **Plume settings → Remote keys → Add a key**. Press the key on your remote. Then choose what a press does and what a hold does. A key can play or pause, go back, or open an app or an input. It can also open Android settings or the network settings, or do nothing. If you set a PIN in **Lock layout**, Plume asks for it first.
-- A long app name no longer runs past its tile. It scrolls slowly while the app is selected.
-- **Uninstall an app.** Hold **OK** on an app in the row. Select **Uninstall**. Plume does not show this for system apps, for Plume, or when the layout is locked.
-- **Plume settings → App row → Icon style** has a new choice, **Banner**. Each app shows its own picture, as on Apple TV. An app with no banner gets its own colour behind a white mark. Monochrome stays the default.
-- **Plume settings → App row → Icon style** has a fourth choice, **Monochrome banner**. The pictures are grey until you select one. An app with no banner gets its own colour behind a white mark, as with **Banner**.
-- **Google Home panel.** Set a remote key to open the Google TV smart home panel. Select **Plume settings → Remote keys**. Add your lights and routines to Favorites in the Google Home app first.
+## 1.6
+
+### Design
+- **Glass.** A frosted-glass blur behind the tiles and menus. Plume blurs the wallpaper behind the tiles, menus, cards and the settings panel. Glass is on after the update. To turn it off, select **Plume settings → Appearance → Glass**.
+- **A new Plume settings.** Each section has an icon and a live preview. Under its name, each section shows its settings. While you change a setting, the part of the home screen it changes stays bright.
+- **Banner icons.** Each app shows its own picture, as on Apple TV. An app with no banner gets its own colour behind a white mark. Select **Plume settings → Apps row → Icon style**.
+- **Hide the Shows row.** Show only your apps and wallpaper, and press Down for your shows. Press Up to hide the row again. Select **Plume settings → Shows row → Show row**.
+- **Auto follows the sun.** With **Theme** set to **Auto**, Plume changes to dark at sunset and to light at sunrise.
+- **Text that fits the wallpaper.** The clock, the weather and the Continue watching text change to white or dark to match your photo.
+- **Set how strong the fades are.** Select **Plume settings → Appearance → Top fade** or **Bottom fade**. Choose from 0% to 100%.
+- **Colour icons on the Shows row.** Each card can show the app's logo in its own colour. Select **Plume settings → Shows row → Icons**.
+- **Monochrome banner.** A fourth icon style. The pictures are grey until you select one.
+
+### New
+- **Sources.** A new icon in the top bar lists your TV inputs. A device such as a PS5 shows with its logo.
+- **Remote keys.** Choose what a button on your remote does when you press it or hold it. Select **Plume settings → Remote & Home button → Remote keys**.
+- **Google Home panel.** Set a remote key to open the Google TV smart home panel. Select **Plume settings → Remote & Home button → Remote keys**. Add your lights and routines to Favorites in the Google Home app first.
+- **Uninstall an app.** Hold **OK** on an app in the row and select **Uninstall**.
+
+### Easier to use
+- **Setup fits your TV.** The Home button setup starts with the step that works on your TV.
+- **Settings in home screen order.** The sections follow the home screen from top to bottom. Your settings do not change.
+- A long app name scrolls slowly while the app is selected. It no longer runs past its tile.
+- Plume shows in the app list on Xiaomi TVs.
+
+### Fixes
+- **Less memory.** Plume no longer runs twice after an update. It also keeps each picture only once.
+- On a Fire TV, an HDMI tile switches to its input. Before, it opened Live TV.
 - **Google TV setup screens.** Plume no longer covers the Google TV setup and onboarding screens. The Assistant button can open the Gemini for TV setup again.
 
 ## 1.5
