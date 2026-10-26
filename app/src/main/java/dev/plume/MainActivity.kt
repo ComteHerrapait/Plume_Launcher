@@ -4005,7 +4005,7 @@ class MainActivity : Activity() {
         const val DARK_BG = 0xFF000000.toInt() // home ground, settings panel, inset boxes
         const val DARK_SURFACE = 0xFF0B0B0B.toInt() // placeholders behind images
         const val DARK_TEXT = 0xFFF5F5F5.toInt()
-        const val DARK_TEXT_2 = 0xFF8A8A8A.toInt() // values, unfocused rows, supporting text
+        const val DARK_TEXT_2 = 0xFF7A7A7A.toInt() // values, unfocused rows, supporting text
         // Translucent (70% at rest, 80% selected), so the wallpaper shows through the tiles like frosted glass.
         /** Android's own Watch Next list, listed with the channels so it can be turned off too. */
         const val WATCH_NEXT = "watchnext"
