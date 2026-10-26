@@ -117,7 +117,6 @@ private class GalleryShow(private val context: Context) : SurfaceHolder.Callback
     @Volatile private var previous: Slide? = null
     @Volatile private var running = false
     private var index = paintings.indices.random()
-    private var misses = 0
     @Volatile private var advanceAt = 0L
     private var render: Thread? = null
 
@@ -139,7 +138,6 @@ private class GalleryShow(private val context: Context) : SurfaceHolder.Callback
     }
 
     fun step(by: Int) {
-        if (paintings.isEmpty()) return
         index = (index + by + paintings.size) % paintings.size
         load(index)
     }
@@ -162,21 +160,7 @@ private class GalleryShow(private val context: Context) : SurfaceHolder.Callback
                 p.load()
             } catch (e: Exception) {
                 null
-            }
-            if (bmp == null) {
-                if (!running) return@execute
-                misses++
-                if (misses < paintings.size) {
-                    val next = (i + 1) % paintings.size
-                    index = next
-                    load(next)
-                } else {
-                    misses = 0
-                    advanceAt = System.currentTimeMillis() + 10_000L
-                }
-                return@execute
-            }
-            misses = 0
+            } ?: return@execute
             synchronized(lock) {
                 if (!running) { // dream ended while decoding
                     bmp.recycle()

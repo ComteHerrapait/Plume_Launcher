@@ -30,8 +30,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clipChildren="false"
-            android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -75,52 +73,52 @@
 
             <ImageView
                 android:id="@+id/wifi"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:contentDescription="@string/network_settings"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_wifi" />
 
             <ImageView
                 android:id="@+id/sourcesButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/sources"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_sources"
                 android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/allAppsButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/all_apps"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="9dp"
                 android:src="@drawable/ic_apps" />
 
             <ImageView
                 android:id="@+id/systemSettings"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/settings"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_settings" />
 
             <ImageView
                 android:id="@+id/launcherSettings"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/plume_settings"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_tune" />
         </LinearLayout>
 
