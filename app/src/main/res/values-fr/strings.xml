@@ -3,7 +3,6 @@
     <string name="delete_photo">Supprimer « %1$s » ?</string>
     <string name="photo_added">« %1$s » ajoutée. Envoyez-en une autre ou appuyez sur Terminé.</string>
     <string name="n_of_m">%1$d sur %2$d</string>
-    <string name="n_hidden">%1$d masqués</string>
     <string name="n_off">%1$d désactivées</string>
     <string name="update_available_row">%1$s disponible</string>
     <string name="up_to_date_row">À jour (%1$s)</string>
@@ -48,7 +47,9 @@
     <string name="done">Terminé</string>
     <string name="edit_apps_row">Modifier la ligne d\'applis</string>
     <string name="theme">Thème</string>
-    <string name="photo_fade">Fondu des photos</string>
+    <string name="fade_top">Fondu en haut</string>
+    <string name="fade_bottom">Fondu en bas</string>
+    <string name="glass">Verre dépoli</string>
     <string name="sort_apps">Trier les applis</string>
     <string name="manual">Manuel</string>
     <string name="most_used">Les plus utilisées</string>
@@ -153,7 +154,7 @@
     <!-- Fenêtres de configuration du bouton Accueil -->
     <string name="setup_home">Configurer le bouton Accueil</string>
     <string name="preview_home_setup">Aperçu des fenêtres de configuration Accueil</string>
-    <string name="setup_step">Étape %1$d sur 3</string>
+    <string name="setup_step">Étape %1$d sur %2$d</string>
     <string name="setup_role_title">Faire de Plume votre écran d\'accueil</string>
     <string name="setup_role_body">Android va demander quelle appli utiliser comme écran d\'accueil. Choisissez Plume.</string>
     <string name="setup_test_title">Appuyez sur Accueil sur votre télécommande</string>
@@ -170,6 +171,10 @@
     <string name="setup_not_now">Plus tard</string>
     <string name="setup_skip_check">Passer cette vérification</string>
     <string name="setup_open_accessibility">Ouvrir l\'accessibilité</string>
+    <string name="setup_restricted_title">Autoriser le bouton Accueil de Plume</string>
+    <string name="setup_restricted_body">Cette TV grise l\'interrupteur pour les applis installées hors du Play Store. Dans Infos sur l\'appli, sélectionnez \"Autoriser les paramètres restreints\". Sur certaines TV, c\'est dans le menu ⋮. Puis appuyez sur Retour pour revenir ici.</string>
+    <string name="setup_open_app_info">Ouvrir Infos sur l\'appli</string>
+    <string name="setup_no_menu">Je ne le trouve pas</string>
     <string name="setup_try_again">Réessayer</string>
     <string name="setup_close">Fermer</string>
     <string name="setup_done">Terminé</string>
@@ -189,9 +194,7 @@
     <string name="align_right">Droite</string>
     <string name="section_appearance">Apparence</string>
     <string name="section_app_row">Ligne d\'applis</string>
-    <string name="section_weather">Météo</string>
     <string name="section_screensaver">Écran de veille</string>
-    <string name="section_home">Bouton Accueil et touches</string>
     <string name="sources">Sources</string>
     <string name="no_signal">Pas de signal</string>
     <string name="in_row">Dans la ligne</string>
@@ -201,43 +204,28 @@
     <string name="bing_daily">Image Bing du jour</string>
     <!-- Remote keys: change what a button on the remote does -->
     <string name="section_keys">Touches de la télécommande</string>
-    <string name="group_apps">Applis et entrées</string>
-    <string name="group_system">Système et réglages</string>
-    <string name="group_media">Média</string>
-    <string name="group_nav">Navigation</string>
-    <string name="group_other">Autre</string>
     <string name="key_add">Ajouter une touche</string>
-    <string name="key_press_prompt">Appuyez sur la touche à changer sur votre télécommande. Retour, OK, les flèches et certaines touches du téléviseur ne peuvent pas être changés. Une touche réglée ici ne fait plus son travail habituel.</string>
+    <string name="key_press_prompt">Appuyez sur la touche à changer sur votre télécommande. Retour, OK et les flèches ne peuvent pas être changés. Une touche réglée ici ne fait plus son travail habituel.</string>
     <string name="key_short">Appui</string>
     <string name="key_long">Appui long</string>
     <string name="key_unset">Non réglée</string>
     <string name="key_block">Ne rien faire</string>
-    <string name="key_hold_needs_press">Choisissez d\'abord une action sur appui</string>
-    <string name="inactive">Inactif</string>
-    <string name="key_name">Nom</string>
-    <string name="key_name_hint">Nom de la touche</string>
     <string name="key_open_app">Ouvrir une appli ou une entrée…</string>
     <string name="key_remove">Retirer cette touche</string>
     <string name="key_number">Touche %1$d</string>
     <string name="act_play_pause">Lecture / Pause</string>
     <string name="act_next">Suivant</string>
     <string name="act_previous">Précédent</string>
+    <string name="act_stop">Arrêt</string>
     <string name="act_rewind">Retour rapide</string>
     <string name="act_forward">Avance rapide</string>
     <string name="act_back">Retour</string>
-    <string name="act_notifications">Tableau de bord Google TV</string>
+    <string name="act_recents">Applis récentes</string>
+    <string name="act_notifications">Notifications</string>
+    <string name="act_quick">Réglages rapides</string>
     <string name="act_power">Menu d\'alimentation</string>
     <string name="act_settings">Paramètres Android</string>
     <string name="act_network">Paramètres réseau</string>
-    <string name="act_assistant">Assistant Google</string>
-    <string name="act_home_panel">Panneau Google Home</string>
-    <string name="act_up">Monter</string>
-    <string name="act_down">Descendre</string>
-    <string name="act_left">Gauche</string>
-    <string name="act_right">Droite</string>
-    <string name="act_select">Sélectionner</string>
-    <string name="action_unavailable">Non disponible sur ce téléviseur</string>
-    <string name="action_failed">Impossible de faire cela</string>
     <plurals name="n_keys">
         <item quantity="one">%d touche</item>
         <item quantity="other">%d touches</item>
@@ -248,4 +236,5 @@
     <string name="watch_next">À suivre (Android TV)</string>
     <string name="bottom_row">Rangée du bas</string>
     <string name="automatic">Automatique</string>
+    <string name="fire_os_no_input">Fire TV n\'a pas laissé Plume changer d\'entrée. Maintenez Accueil et choisissez Entrées.</string>
 </resources>

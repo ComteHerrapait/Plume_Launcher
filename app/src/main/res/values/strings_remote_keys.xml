@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fork-only remote-key strings. Kept out of strings.xml so upstream merges stay clean. -->
+    <string name="group_apps">Apps &amp; inputs</string>
+    <string name="group_system">System &amp; settings</string>
+    <string name="group_media">Media</string>
+    <string name="group_nav">Navigation</string>
+    <string name="group_other">Other</string>
+
+    <string name="key_press_prompt_long">Press the key to change on your remote. Back, OK, the arrows and some TV keys can\'t be changed. A key set here stops doing its usual job.</string>
+    <string name="key_hold_needs_press">Set a press action first</string>
+    <string name="inactive">Inactive</string>
+    <string name="key_name">Name</string>
+    <string name="key_name_hint">Button name</string>
+
+    <string name="act_dashboard">Google TV dashboard</string>
+    <string name="act_assistant">Google Assistant</string>
+    <string name="act_home_panel">Google Home panel</string>
+    <string name="act_up">Move up</string>
+    <string name="act_down">Move down</string>
+    <string name="act_left">Move left</string>
+    <string name="act_right">Move right</string>
+    <string name="act_select">Select</string>
+
+    <string name="action_unavailable">Not available on this TV</string>
+    <string name="action_failed">Couldn\'t do that</string>
+</resources>

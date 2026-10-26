@@ -30,8 +30,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clipChildren="false"
-            android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -75,52 +73,52 @@
 
             <ImageView
                 android:id="@+id/wifi"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:contentDescription="@string/network_settings"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_wifi" />
 
             <ImageView
                 android:id="@+id/sourcesButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/sources"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_sources"
                 android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/allAppsButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/all_apps"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="9dp"
                 android:src="@drawable/ic_apps" />
 
             <ImageView
                 android:id="@+id/systemSettings"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/settings"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_settings" />
 
             <ImageView
                 android:id="@+id/launcherSettings"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/plume_settings"
                 android:focusable="true"
-                android:padding="12dp"
+                android:padding="8dp"
                 android:src="@drawable/ic_tune" />
         </LinearLayout>
 
@@ -275,9 +273,9 @@
         android:clickable="true"
         android:visibility="gone">
 
-        <LinearLayout
+        <dev.plume.GlassBox
             android:id="@+id/settingsPanel"
-            android:layout_width="380dp"
+            android:layout_width="400dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
             android:orientation="vertical"
@@ -285,6 +283,15 @@
             android:paddingTop="40dp"
             android:paddingEnd="48dp"
             android:paddingBottom="27dp">
+
+            <!-- "Plume settings ›" above a section's title, so you know where Back goes. -->
+            <TextView
+                android:id="@+id/settingsCrumb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="14dp"
+                android:textSize="13sp"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/settingsTitle"
@@ -309,6 +316,19 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
             </ScrollView>
-        </LinearLayout>
+
+            <!-- What the focused row does; empty for rows that need no explaining, but always 3 lines tall. -->
+            <TextView
+                android:id="@+id/settingsHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingMultiplier="1.15"
+                android:maxLines="3"
+                android:minLines="3"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:textSize="13sp" />
+        </dev.plume.GlassBox>
     </FrameLayout>
 </FrameLayout>
