@@ -438,7 +438,7 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         unlockedUntil = 0L // leaving the home screen locks it again (onPause would also fire for permission dialogs)
-        Remap.learn = null // never keep swallowing keys for a page that's no longer on screen
+        RemoteKeys.learn = null // never keep swallowing keys for a page that's no longer on screen
         if (homeTest != 0) leftDuringTest = true
         super.onStop()
     }
@@ -1237,6 +1237,61 @@ class MainActivity : Activity() {
         }) { pickAction(id, hold) }
     }
 
+    // ---------- remote keys ----------
+    // Settings > Remote keys: press a key on the remote to pick it, then choose what it does. The work is done by
+    // the Home key service (see RemoteKeys), which is why the page asks for it to be on.
+
+    private val remoteKeys by lazy {
+        RemoteKeysUi(object : RemoteKeysUi.Host {
+            override val context: Context get() = this@MainActivity
+            override val chosen: String get() = CHOSEN
+
+            override fun showRows(title: String, rows: List<Triple<String, String, () -> Unit>>, focus: Int, back: () -> Unit) {
+                this@MainActivity.showPage(title, rows, focus, back = back)
+            }
+
+            override fun showContent(title: String, content: View, back: () -> Unit, onExit: (() -> Unit)?) {
+                this@MainActivity.showPage(title, emptyList(), top = content, back = back)
+                pageExit = onExit
+            }
+
+            override fun row(title: String, value: String, action: () -> Unit): View =
+                settingsRow(title, value, action = action)
+
+            override fun header(text: String): View = label(text, 11f).apply {
+                secondary(0.6f)
+                isFocusable = false
+                isClickable = false
+                if (Build.VERSION.SDK_INT >= 28) setAccessibilityHeading(true)
+                setPadding(dp(14), dp(12), dp(14), dp(3))
+            }
+
+            override fun hint(text: String): View = label(text, 15f).apply {
+                maxLines = 5
+                setPadding(dp(14), dp(10), dp(14), dp(10))
+            }
+
+            override fun mute(row: View) {
+                if (!dark) row.alpha = 0.6f
+            }
+
+            override fun textField(initial: String, hint: String, done: (String) -> Unit): EditText =
+                this@MainActivity.textField(initial, hint, InputType.TYPE_TEXT_FLAG_CAP_WORDS, EditorInfo.IME_ACTION_DONE, done)
+
+            override fun toast(res: Int) { this@MainActivity.toast(res) }
+            override fun toastLong(res: Int) { this@MainActivity.toast(getString(res), long = true) }
+            override fun post(action: () -> Unit) { ui.post(action) }
+
+            override fun appsAndInputs(): List<Pair<String, String>> =
+                (sources + sortedApps().filter { !it.pkg.startsWith(HDMI) }).map { a ->
+                    val action = if (a.pkg.startsWith(HDMI)) "hdmi:" + a.pkg.removePrefix(HDMI) else "app:" + a.pkg
+                    a.label to action
+                }
+
+            override fun backToSettings() { renderSettings(R.string.section_keys) }
+        })
+    }
+
     /** While the home screen shows, a folder wallpaper moves on to its next photo when its time is up. */
     private val wallpaperTick = object : Runnable {
         override fun run() {
@@ -1584,10 +1639,10 @@ class MainActivity : Activity() {
         )
         for (k in listOf(R.string.sort_apps, R.string.weather_units)) steps[k] = { rows[k]!!.third() }
         // Like the layout: behind the PIN. unlock() closes the panel after the PIN, so open it again.
-        rows[R.string.section_keys] = page(getString(R.string.section_keys), "${keysSummary()}  ›") {
+        rows[R.string.section_keys] = page(getString(R.string.section_keys), "${remoteKeys.summary()}  ›") {
             unlock(back = { renderSettings(R.string.section_keys) }) {
                 if (settingsScrim.visibility != View.VISIBLE) showPanel()
-                pickKeys()
+                remoteKeys.pickKeys()
             }
         }
         val on = { b: Boolean -> getString(if (b) R.string.on else R.string.off) }
@@ -1609,7 +1664,7 @@ class MainActivity : Activity() {
             Triple(R.string.bottom_row, rowName(), listOfNotNull(R.string.show_row, R.string.apps_when_hidden.takeIf { rowShow() != "always" },
                 R.string.row_name, R.string.show_icons, R.string.cw_apps, R.string.cw_channels, R.string.restore_hidden)),
             Triple(R.string.section_screensaver, rows[R.string.screensaver]!!.second, listOf(R.string.screensaver, R.string.test_screensaver, R.string.screensaver_timing)),
-            Triple(R.string.section_remote_home, on(homeServiceOn() || isDefaultHome()),
+            Triple(R.string.section_remote_home, "${on(homeServiceOn() || isDefaultHome())} · ${remoteKeys.summary()}",
                 listOf(R.string.home_button, R.string.smooth_volume, R.string.default_launcher, R.string.setup_home, R.string.section_keys)),
             Triple(R.string.section_lock, on(lockOn()), listOf(R.string.lock_layout)),
         )
@@ -1692,6 +1747,8 @@ class MainActivity : Activity() {
     private var pageExit: (() -> Unit)? = null // cleanup when the page goes away (stops the upload server)
 
     private fun page(title: String, value: String = "", action: () -> Unit) = Triple(title, value, action)
+
+    private fun toast(res: Int) = Toast.makeText(this, res, Toast.LENGTH_SHORT).show()
 
     private fun showPage(title: String, rows: List<Triple<String, String, () -> Unit>>, focus: Int = 0, top: View? = null,
                          steps: List<((Int) -> Unit)?> = emptyList(), styles: List<RowStyle?> = emptyList(), crumb: String? = null,

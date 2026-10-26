@@ -32,6 +32,7 @@ Put changes that are not released under `## Unreleased`. Rename that heading to 
 ### New
 - **Sources.** A new icon in the top bar lists your TV inputs. A device such as a PS5 shows with its logo.
 - **Remote keys.** Choose what a button on your remote does when you press it or hold it. Select **Plume settings → Remote & Home button → Remote keys**.
+- **Google Home panel.** Set a remote key to open the Google TV smart home panel. Select **Plume settings → Remote & Home button → Remote keys**. Add your lights and routines to Favorites in the Google Home app first.
 - **Uninstall an app.** Hold **OK** on an app in the row and select **Uninstall**.
 
 ### Easier to use
@@ -43,6 +44,7 @@ Put changes that are not released under `## Unreleased`. Rename that heading to 
 ### Fixes
 - **Less memory.** Plume no longer runs twice after an update. It also keeps each picture only once.
 - On a Fire TV, an HDMI tile switches to its input. Before, it opened Live TV.
+- **Google TV setup screens.** Plume no longer covers the Google TV setup and onboarding screens. The Assistant button can open the Gemini for TV setup again.
 
 ## 1.5
 
